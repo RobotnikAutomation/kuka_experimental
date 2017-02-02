@@ -16,6 +16,14 @@
           <mesh filename="package://kuka_kr6_support/meshes/kr6_agilus/collision/base_link.stl" />
         </geometry>
       </collision>
+      <inertial>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <mass value="0.1" />
+          <inertia
+            ixx="1.0" ixy="0.0" ixz="0.0"
+                      iyy="1.0" iyz="0.0"
+                                izz="1.0" />
+      </inertial>
     </link>
     <link name="${prefix}link_1">
       <visual>
@@ -30,6 +38,14 @@
           <mesh filename="package://kuka_kr6_support/meshes/kr6_agilus/collision/link_1.stl" />
         </geometry>
       </collision>
+      <inertial>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <mass value="0.1" />
+          <inertia
+            ixx="1.0" ixy="0.0" ixz="0.0"
+                      iyy="1.0" iyz="0.0"
+                                izz="1.0" />
+      </inertial>
     </link>
     <link name="${prefix}link_2">
       <visual>
@@ -44,6 +60,14 @@
           <mesh filename="package://kuka_kr6_support/meshes/kr6r900sixx/collision/link_2.stl" />
         </geometry>
       </collision>
+      <inertial>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <mass value="0.1" />
+          <inertia
+            ixx="1.0" ixy="0.0" ixz="0.0"
+                      iyy="1.0" iyz="0.0"
+                                izz="1.0" />
+      </inertial>
     </link>
     <link name="${prefix}link_3">
       <visual>
@@ -58,6 +82,14 @@
           <mesh filename="package://kuka_kr6_support/meshes/kr6_agilus/collision/link_3.stl" />
         </geometry>
       </collision>
+      <inertial>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <mass value="0.1" />
+          <inertia
+            ixx="1.0" ixy="0.0" ixz="0.0"
+                      iyy="1.0" iyz="0.0"
+                                izz="1.0" />
+      </inertial>
     </link>
     <link name="${prefix}link_4">
       <visual>
@@ -72,6 +104,14 @@
           <mesh filename="package://kuka_kr6_support/meshes/kr6r900sixx/collision/link_4.stl" />
         </geometry>
       </collision>
+      <inertial>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <mass value="0.1" />
+          <inertia
+            ixx="1.0" ixy="0.0" ixz="0.0"
+                      iyy="1.0" iyz="0.0"
+                                izz="1.0" />
+      </inertial>
     </link>
     <link name="${prefix}link_5">
       <visual>
@@ -86,6 +126,14 @@
           <mesh filename="package://kuka_kr6_support/meshes/kr6_agilus/collision/link_5.stl" />
         </geometry>
       </collision>
+      <inertial>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <mass value="0.1" />
+          <inertia
+            ixx="1.0" ixy="0.0" ixz="0.0"
+                      iyy="1.0" iyz="0.0"
+                                izz="1.0" />
+      </inertial>
     </link>
     <link name="${prefix}link_6">
       <visual>
@@ -100,6 +148,14 @@
           <mesh filename="package://kuka_kr6_support/meshes/kr6_agilus/collision/link_6.stl" />
         </geometry>
       </collision>
+      <inertial>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <mass value="0.1" />
+          <inertia
+            ixx="1.0" ixy="0.0" ixz="0.0"
+                      iyy="1.0" iyz="0.0"
+                                izz="1.0" />
+      </inertial>
     </link>
     <!-- This frame corresponds to the $FLANGE coordinate system in KUKA KRC controllers. -->
     <link name="${prefix}tool0"/>
@@ -110,6 +166,7 @@
       <child link="${prefix}link_1"/>
       <axis xyz="0 0 -1"/>
       <limit effort="0" lower="${-DEG2RAD * 170}" upper="${DEG2RAD * 170}" velocity="${DEG2RAD * 360}"/>
+      <dynamics damping="100.0" friction="100.0"/>
     </joint>
     <joint name="${prefix}joint_a2" type="revolute">
       <origin xyz="0.025 0 0" rpy="0 0 0"/>
@@ -117,6 +174,7 @@
       <child link="${prefix}link_2"/>
       <axis xyz="0 1 0"/>
       <limit effort="0" lower="${-DEG2RAD * 190}" upper="${DEG2RAD * 45}" velocity="${DEG2RAD * 300}"/>
+      <dynamics damping="100.0" friction="100.0"/>
     </joint>
     <joint name="${prefix}joint_a3" type="revolute">
       <origin xyz="0.455 0 0" rpy="0 0 0"/>
@@ -124,6 +182,7 @@
       <child link="${prefix}link_3"/>
       <axis xyz="0 1 0"/>
       <limit effort="0" lower="${-DEG2RAD * 120}" upper="${DEG2RAD * 156}" velocity="${DEG2RAD * 360}"/>
+      <dynamics damping="100.0" friction="100.0"/>
     </joint>
     <joint name="${prefix}joint_a4" type="revolute">
       <origin xyz="0 0 0.035" rpy="0 0 0"/>
@@ -131,6 +190,7 @@
       <child link="${prefix}link_4"/>
       <axis xyz="-1 0 0"/>
       <limit effort="0" lower="${-DEG2RAD * 185}" upper="${DEG2RAD * 185}" velocity="${DEG2RAD * 381}"/>
+      <dynamics damping="100.0" friction="100.0"/>
     </joint>
     <joint name="${prefix}joint_a5" type="revolute">
       <origin xyz="0.420 0 0" rpy="0 0 0"/>
@@ -138,6 +198,7 @@
       <child link="${prefix}link_5"/>
       <axis xyz="0 1 0"/>
       <limit effort="0" lower="${-DEG2RAD * 120}" upper="${DEG2RAD * 120}" velocity="${DEG2RAD * 388}"/>
+      <dynamics damping="100.0" friction="100.0"/>
     </joint>
     <joint name="${prefix}joint_a6" type="revolute">
       <origin xyz="0.080 0 0" rpy="0 0 0"/>
@@ -145,6 +206,7 @@
       <child link="${prefix}link_6"/>
       <axis xyz="-1 0 0"/>
       <limit effort="0" lower="${-DEG2RAD * 350}" upper="${DEG2RAD * 350}" velocity="${DEG2RAD * 615}"/>
+      <dynamics damping="100.0" friction="100.0"/>
     </joint>
     <joint name="${prefix}joint_a6-tool0" type="fixed">
       <parent link="${prefix}link_6"/>
@@ -159,5 +221,62 @@
       <parent link="${prefix}base_link"/>
       <child link="${prefix}base"/>
     </joint>
+
+
+    <transmission name="${prefix}joint_a1_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_a1">
+        <hardwareInterface>PositionJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}joint_a1_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+    <transmission name="${prefix}joint_a2_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_a2">
+        <hardwareInterface>PositionJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}joint_a2_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+    <transmission name="${prefix}joint_a3_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_a3">
+        <hardwareInterface>PositionJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}joint_a3_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+    <transmission name="${prefix}joint_a4_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_a4">
+        <hardwareInterface>PositionJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}joint_a4_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+    <transmission name="${prefix}joint_a5_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_a5">
+        <hardwareInterface>PositionJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}joint_a5_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+    <transmission name="${prefix}joint_a6_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_a6">
+        <hardwareInterface>PositionJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}joint_a6_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
   </xacro:macro>
 </robot>
