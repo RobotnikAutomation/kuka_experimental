@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!--Generates a urdf from the macro in kr16_2_macro.xacro -->
+<robot name="kuka_kr70_r2100" xmlns:xacro="http://wiki.ros.org/xacro">
+  
+  <link name="world"/>
+  <joint name="world_joint" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+  </joint>
+  <xacro:include filename="$(find kuka_kr70_support)/urdf/kr70_r2100_macro.xacro" />
+  <xacro:kuka_kr70_r2100 prefix=""/>
+      <gazebo>
+      <plugin name="ros_control" filename="libgazebo_ros_control.so">
+		    <robotParam>robot_description</robotParam>
+        <controlPeriod>0.001</controlPeriod>
+	      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+		    <legacyModeNS>true</legacyModeNS>
+      </plugin>
+    </gazebo>
+</robot>
