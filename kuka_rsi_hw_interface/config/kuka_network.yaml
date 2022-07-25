@@ -1,0 +1,3 @@
+rsi:
+  listen_address: "172.32.0.150"
+  listen_port: 49152
