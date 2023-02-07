@@ -10,18 +10,18 @@
       <Input InIdx="6" OutObjID="ETHERNET1" OutIdx="6" />
     </Inputs>
     <Parameters>
-      <Parameter Name="LowerLimA1" ParamID="1" ParamValue="-90.0" />
-      <Parameter Name="LowerLimA2" ParamID="2" ParamValue="-90.0" />
-      <Parameter Name="LowerLimA3" ParamID="3" ParamValue="-90.0" />
-      <Parameter Name="LowerLimA4" ParamID="4" ParamValue="-90.0" />
-      <Parameter Name="LowerLimA5" ParamID="5" ParamValue="-90.0" />
-      <Parameter Name="LowerLimA6" ParamID="6" ParamValue="-90.0" />
-      <Parameter Name="UpperLimA1" ParamID="13" ParamValue="90.0" />
-      <Parameter Name="UpperLimA2" ParamID="14" ParamValue="90.0" />
-      <Parameter Name="UpperLimA3" ParamID="15" ParamValue="90.0" />
-      <Parameter Name="UpperLimA4" ParamID="16" ParamValue="90.0" />
-      <Parameter Name="UpperLimA5" ParamID="17" ParamValue="90.0" />
-      <Parameter Name="UpperLimA6" ParamID="18" ParamValue="90.0" />
+      <Parameter Name="LowerLimA1" ParamID="1" ParamValue="-180.0" />
+      <Parameter Name="LowerLimA2" ParamID="2" ParamValue="-180.0" />
+      <Parameter Name="LowerLimA3" ParamID="3" ParamValue="-180.0" />
+      <Parameter Name="LowerLimA4" ParamID="4" ParamValue="-180.0" />
+      <Parameter Name="LowerLimA5" ParamID="5" ParamValue="-180.0" />
+      <Parameter Name="LowerLimA6" ParamID="6" ParamValue="-180.0" />
+      <Parameter Name="UpperLimA1" ParamID="13" ParamValue="180.0" />
+      <Parameter Name="UpperLimA2" ParamID="14" ParamValue="180.0" />
+      <Parameter Name="UpperLimA3" ParamID="15" ParamValue="180.0" />
+      <Parameter Name="UpperLimA4" ParamID="16" ParamValue="180.0" />
+      <Parameter Name="UpperLimA5" ParamID="17" ParamValue="180.0" />
+      <Parameter Name="UpperLimA6" ParamID="18" ParamValue="180.0" />
     </Parameters>
   </RSIObject>
   <RSIObject ObjType="ETHERNET" ObjTypeID="64" ObjID="ETHERNET1">
@@ -34,12 +34,12 @@
   </RSIObject>
   <RSIObject ObjType="AXISCORRMON" ObjTypeID="82" ObjID="AXISCORRMON1">
     <Parameters>
-      <Parameter Name="MaxA1" ParamID="1" ParamValue="90.0" />
-      <Parameter Name="MaxA2" ParamID="2" ParamValue="90.0" />
-      <Parameter Name="MaxA3" ParamID="3" ParamValue="90.0" />
-      <Parameter Name="MaxA4" ParamID="4" ParamValue="90.0" />
-      <Parameter Name="MaxA5" ParamID="5" ParamValue="90.0" />
-      <Parameter Name="MaxA6" ParamID="6" ParamValue="90.0" />
+      <Parameter Name="MaxA1" ParamID="1" ParamValue="360.0" />
+      <Parameter Name="MaxA2" ParamID="2" ParamValue="360.0" />
+      <Parameter Name="MaxA3" ParamID="3" ParamValue="360.0" />
+      <Parameter Name="MaxA4" ParamID="4" ParamValue="360.0" />
+      <Parameter Name="MaxA5" ParamID="5" ParamValue="360.0" />
+      <Parameter Name="MaxA6" ParamID="6" ParamValue="360.0" />
       <Parameter Name="MaxE1" ParamID="7" ParamValue="6.0" />
       <Parameter Name="MaxE2" ParamID="8" ParamValue="6.0" />
       <Parameter Name="MaxE3" ParamID="9" ParamValue="6.0" />
