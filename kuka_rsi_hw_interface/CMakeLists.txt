@@ -1,8 +1,7 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 2.8.3)
 project(kuka_rsi_hw_interface)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
@@ -12,13 +11,28 @@ find_package(catkin REQUIRED COMPONENTS
   realtime_tools
   roscpp
   std_msgs
+  message_generation
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(TinyXML REQUIRED)
 
+add_service_files(
+  FILES
+  write_8_outputs.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
 
 catkin_package(
+  INCLUDE_DIRS
+    include
+  LIBRARIES
+    kuka_hardware_interface
   CATKIN_DEPENDS
     controller_manager
     hardware_interface

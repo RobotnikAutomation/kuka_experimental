@@ -1,8 +1,7 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 2.8.3)
 project(kuka_eki_hw_interface)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   angles
@@ -18,6 +17,10 @@ find_package(TinyXML REQUIRED)
 
 
 catkin_package(
+  INCLUDE_DIRS
+    include
+  LIBRARIES
+    kuka_eki_hw_interface
   CATKIN_DEPENDS
     controller_manager
     hardware_interface
