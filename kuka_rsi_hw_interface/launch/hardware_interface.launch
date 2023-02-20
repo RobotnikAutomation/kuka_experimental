@@ -7,7 +7,8 @@
     <node name="kuka_hardware_interface" pkg="kuka_rsi_hw_interface"
       type="kuka_hardware_interface_node" respawn="false"
       output="screen"
-      required="true"/>
+      required="true"
+      launch-prefix="nice -n -20"/>
 
     <!-- Load joint controller configurations from YAML file to parameter server -->
     <rosparam file="$(find kuka_rsi_hw_interface)/config/hardware_controllers.yaml" command="load"/>
