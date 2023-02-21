@@ -12,13 +12,28 @@ find_package(catkin REQUIRED COMPONENTS
   realtime_tools
   roscpp
   std_msgs
+  message_generation
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(TinyXML REQUIRED)
 
+add_service_files(
+  FILES
+  write_8_outputs.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
 
 catkin_package(
+  INCLUDE_DIRS
+    include
+  LIBRARIES
+    kuka_hardware_interface
   CATKIN_DEPENDS
     controller_manager
     hardware_interface
