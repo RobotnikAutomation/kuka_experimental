@@ -1,7 +1,11 @@
 <launch>
-    <rosparam file="$(find kuka_rsi_hw_interface)/config/kuka_network.yaml" command="load" unless="$(arg sim)"/>
 
-    <param name="robot_description" command="$(find xacro)/xacro '$(find corosect_description)/urdf/robots/corosect.urdf.xacro'"/>
+    <arg name="gripper_type" default="null"/> <!-- side/top/null -->
+    <arg name="sim" default="false"/> 
+    
+    <rosparam file="$(find kuka_rsi_hw_interface)/config/kuka_network.yaml" command="load" unless="$(arg sim)"/>
+    
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find corosect_description)/urdf/robots/corosect.urdf.xacro' gripper_type:=$(arg gripper_type) sim:=$(arg sim)"/>
 
     <!-- Start node without FT sensor -->
     <node name="kuka_hardware_interface" pkg="kuka_rsi_hw_interface"
