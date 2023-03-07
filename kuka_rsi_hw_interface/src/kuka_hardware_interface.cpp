@@ -48,7 +48,7 @@ namespace kuka_rsi_hw_interface
 KukaHardwareInterface::KukaHardwareInterface() :
     joint_position_(6, 0.0), joint_velocity_(6, 0.0), joint_effort_(6, 0.0), joint_position_command_(6, 0.0), joint_velocity_command_(
         6, 0.0), joint_effort_command_(6, 0.0), joint_names_(6), rsi_initial_joint_positions_(6, 0.0), rsi_joint_position_corrections_(
-        6, 0.0), ipoc_(0), n_dof_(6), krc_multiplier_(1.0), digital_output_(8,false)
+        6, 0.0), ipoc_(0), n_dof_(6), krc_multiplier_(1.0), digital_input_(8, 0.0), digital_output_(8,false)
 {
   in_buffer_.resize(1024);
   out_buffer_.resize(1024);
@@ -103,6 +103,19 @@ bool KukaHardwareInterface::write_8_digital_outputs(kuka_rsi_hw_interface::write
    return true;
 }
 
+bool KukaHardwareInterface::read_8_digital_inputs(kuka_rsi_hw_interface::read_8_inputs::Request &req, kuka_rsi_hw_interface::read_8_inputs::Response &res){
+
+  res.in1 = digital_input_[0];
+  res.in2 = digital_input_[1];
+  res.in3 = digital_input_[2];
+  res.in4 = digital_input_[3];
+  res.in5 = digital_input_[4];
+  res.in6 = digital_input_[5];
+  res.in7 = digital_input_[6];
+  res.in8 = digital_input_[7];
+  return true;
+}
+
 bool KukaHardwareInterface::read(const ros::Time time, const ros::Duration period)
 {
   in_buffer_.resize(1024);
@@ -123,7 +136,12 @@ bool KukaHardwareInterface::read(const ros::Time time, const ros::Duration perio
   {
     control_period_.fromSec(krc_multiplier_ * (rsi_state_.ipoc - ipoc_) / 1000.0);
   }
-  
+
+  for (std::size_t i = 0; i < digital_input_.size(); ++i)
+  {
+    digital_input_[i] = rsi_state_.digital_input[i];
+  }
+    
   for (std::size_t i = 0; i < n_dof_; ++i)
   {
     joint_position_[i] = DEG2RAD * rsi_state_.positions[i];

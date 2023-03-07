@@ -68,6 +68,7 @@
 
 // SRV
 #include <kuka_rsi_hw_interface/write_8_outputs.h>
+#include <kuka_rsi_hw_interface/read_8_inputs.h>
 
 
 namespace kuka_rsi_hw_interface
@@ -95,6 +96,7 @@ private:
   std::vector<double> joint_velocity_command_;
   std::vector<double> joint_effort_command_;
   std::vector<bool> digital_output_;
+  std::vector<double> digital_input_;
 
   // RSI
   RSIState rsi_state_;
@@ -130,6 +132,9 @@ public:
 
   //Test section for adding digital output control
   bool write_8_digital_outputs(kuka_rsi_hw_interface::write_8_outputs::Request &req, kuka_rsi_hw_interface::write_8_outputs::Response &res);
+
+  //Test section for adding digital input reading
+  bool read_8_digital_inputs(kuka_rsi_hw_interface::read_8_inputs::Request &req, kuka_rsi_hw_interface::read_8_inputs::Response &res);
 
   void start();
   void configure();

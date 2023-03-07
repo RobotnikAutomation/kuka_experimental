@@ -21,6 +21,7 @@ find_package(TinyXML REQUIRED)
 add_service_files(
   FILES
   write_8_outputs.srv
+  read_8_inputs.srv
 )
 
 generate_messages(

@@ -59,8 +59,11 @@ int main(int argc, char** argv)
 /*   auto stopwatch_last = std::chrono::steady_clock::now();
   auto stopwatch_now = stopwatch_last; */
 
-    // Advertise digital output service
-  ros::ServiceServer server = nh.advertiseService(ros::names::append(ros::this_node::getName(),"/write_8_digital_outputs"), &kuka_rsi_hw_interface::KukaHardwareInterface::write_8_digital_outputs,&kuka_rsi_hw_interface);
+  // Advertise digital output service
+  ros::ServiceServer out_server = nh.advertiseService(ros::names::append(ros::this_node::getName(),"/write_8_digital_outputs"), &kuka_rsi_hw_interface::KukaHardwareInterface::write_8_digital_outputs,&kuka_rsi_hw_interface);
+  
+  // Advertise digital input service
+  ros::ServiceServer in_server = nh.advertiseService(ros::names::append(ros::this_node::getName(),"/read_8_digital_inputs"), &kuka_rsi_hw_interface::KukaHardwareInterface::read_8_digital_inputs,&kuka_rsi_hw_interface);
     
   controller_manager::ControllerManager controller_manager(&kuka_rsi_hw_interface, nh);
 
