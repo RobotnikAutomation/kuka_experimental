@@ -47,7 +47,8 @@
 // ROS
 #include <ros/ros.h>
 #include <std_msgs/String.h>
-
+#include <std_msgs/Int8.h>
+#include <actionlib_msgs/GoalID.h>
 
 // ros_control
 #include <realtime_tools/realtime_publisher.h>
@@ -93,6 +94,7 @@ private:
   std::vector<double> joint_velocity_;
   std::vector<double> joint_effort_;
   std::vector<double> joint_position_command_;
+  std::vector<double> joint_position_command__store_;
   std::vector<double> joint_velocity_command_;
   std::vector<double> joint_effort_command_;
   std::vector<bool> digital_output_;
@@ -125,6 +127,18 @@ private:
   hardware_interface::JointStateInterface joint_state_interface_;
   hardware_interface::PositionJointInterface position_joint_interface_;
 
+  // IIWA Subscriber
+  ros::Subscriber iiwa_inside_subscriber_;
+  std_msgs::Int8 iiwa_in_workspace_;
+
+  // Kuka Subscriber
+  ros::Subscriber kuka_inside_subscriber_;
+  std_msgs::Int8 kuka_in_workspace_;
+    
+  // Cancel trajectory_publisher
+  ros::Publisher cancel_trajectory_publisher_;
+
+
 public:
 
   KukaHardwareInterface();
@@ -138,6 +152,8 @@ public:
 
   void start();
   void configure();
+  void iiwa_cb(const std_msgs::Int8 &msg);
+  void kuka_cb(const std_msgs::Int8 &msg);
   bool read(const ros::Time time, const ros::Duration period);
   bool write(const ros::Time time, const ros::Duration period);
 
