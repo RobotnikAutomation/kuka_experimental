@@ -125,14 +125,14 @@ RSIState::RSIState(std::string xml_doc) :
   RSol_el->Attribute("C", &initial_cart_position[5]);
   // Extract digital inputs
   TiXmlElement* In = rob->FirstChildElement("Digout");
-  In->Attribute("o9", &digital_input[0]);
-  In->Attribute("10", &digital_input[1]);
-  In->Attribute("11", &digital_input[2]);
-  In->Attribute("12", &digital_input[3]);
-  In->Attribute("13", &digital_input[4]);
-  In->Attribute("14", &digital_input[5]);
-  In->Attribute("15", &digital_input[6]);
-  In->Attribute("16", &digital_input[7]);
+  In->Attribute("o20", &digital_input[0]);
+  In->Attribute("o10", &digital_input[1]);
+  In->Attribute("o11", &digital_input[2]);
+  In->Attribute("o12", &digital_input[3]);
+  In->Attribute("o13", &digital_input[4]);
+  In->Attribute("o14", &digital_input[5]);
+  In->Attribute("o15", &digital_input[6]);
+  In->Attribute("o16", &digital_input[7]);
   // Get the IPOC timestamp
   TiXmlElement* ipoc_el = rob->FirstChildElement("IPOC");
   ipoc = std::stoull(ipoc_el->FirstChild()->Value());
