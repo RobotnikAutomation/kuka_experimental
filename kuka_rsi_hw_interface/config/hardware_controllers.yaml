@@ -13,7 +13,13 @@ position_trajectory_controller:
     - joint_a4
     - joint_a5
     - joint_a6
-
+  constraints:
+    joint_a1: {trajectory: 0.2, goal: 0.1}
+    joint_a2: {trajectory: 0.2, goal: 0.1}
+    joint_a3: {trajectory: 0.2, goal: 0.1}
+    joint_a4: {trajectory: 0.2, goal: 0.1}
+    joint_a5: {trajectory: 0.2, goal: 0.1}
+    joint_a6: {trajectory: 0.2, goal: 0.1}
   state_publish_rate: 50 # Defaults to 50
   action_monitor_rate: 20 # Defaults to 20
   stop_trajectory_duration: 1.0
