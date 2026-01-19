@@ -48,7 +48,7 @@ namespace kuka_rsi_hw_interface
 KukaHardwareInterface::KukaHardwareInterface() :
     joint_position_(6, 0.0), joint_velocity_(6, 0.0), joint_effort_(6, 0.0), joint_position_command_(6, 0.0), joint_velocity_command_(
         6, 0.0), joint_effort_command_(6, 0.0), joint_names_(6), rsi_initial_joint_positions_(6, 0.0), rsi_joint_position_corrections_(
-        6, 0.0), ipoc_(0), n_dof_(6), krc_multiplier_(1.0), digital_output_(8,false)
+        6, 0.0), ipoc_(0), n_dof_(6)
 {
   in_buffer_.resize(1024);
   out_buffer_.resize(1024);
@@ -89,20 +89,6 @@ KukaHardwareInterface::~KukaHardwareInterface()
 
 }
 
-bool KukaHardwareInterface::write_8_digital_outputs(kuka_rsi_hw_interface::write_8_outputs::Request &req, kuka_rsi_hw_interface::write_8_outputs::Response &res){
-
-   digital_output_.clear();
-   digital_output_.push_back(req.out1);
-   digital_output_.push_back(req.out2);
-   digital_output_.push_back(req.out3);
-   digital_output_.push_back(req.out4);
-   digital_output_.push_back(req.out5);
-   digital_output_.push_back(req.out6);
-   digital_output_.push_back(req.out7);
-   digital_output_.push_back(req.out8);
-   return true;
-}
-
 bool KukaHardwareInterface::read(const ros::Time time, const ros::Duration period)
 {
   in_buffer_.resize(1024);
@@ -111,19 +97,13 @@ bool KukaHardwareInterface::read(const ros::Time time, const ros::Duration perio
   {
     return false;
   }
-
+  ROS_INFO("Received from robot:%s", in_buffer_.c_str());
   if (rt_rsi_pub_->trylock()){
     rt_rsi_pub_->msg_.data = in_buffer_;
     rt_rsi_pub_->unlockAndPublish();
   }
 
   rsi_state_ = RSIState(in_buffer_);
-
-  if(rsi_state_.ipoc > ipoc_)
-  {
-    control_period_.fromSec(krc_multiplier_ * (rsi_state_.ipoc - ipoc_) / 1000.0);
-  }
-  
   for (std::size_t i = 0; i < n_dof_; ++i)
   {
     joint_position_[i] = DEG2RAD * rsi_state_.positions[i];
@@ -142,7 +122,8 @@ bool KukaHardwareInterface::write(const ros::Time time, const ros::Duration peri
     rsi_joint_position_corrections_[i] = (RAD2DEG * joint_position_command_[i]) - rsi_initial_joint_positions_[i];
   }
 
-  out_buffer_ = RSICommand(rsi_joint_position_corrections_, digital_output_, ipoc_).xml_doc;
+  out_buffer_ = RSICommand(rsi_joint_position_corrections_, ipoc_).xml_doc;
+  ROS_INFO("Send to robot:%s", out_buffer_.c_str());
   server_->send(out_buffer_);
 
   return true;
@@ -161,7 +142,6 @@ void KukaHardwareInterface::start()
   if (bytes < 100)
   {
     bytes = server_->recv(in_buffer_);
-    krc_multiplier_ = 12.0;
   }
 
   rsi_state_ = RSIState(in_buffer_);
@@ -172,7 +152,7 @@ void KukaHardwareInterface::start()
     rsi_initial_joint_positions_[i] = rsi_state_.initial_positions[i];
   }
   ipoc_ = rsi_state_.ipoc;
-  out_buffer_ = RSICommand(rsi_joint_position_corrections_, digital_output_, ipoc_).xml_doc;
+  out_buffer_ = RSICommand(rsi_joint_position_corrections_, ipoc_).xml_doc;
   server_->send(out_buffer_);
   // Set receive timeout to 1 second
   server_->set_timeout(1000);
@@ -182,20 +162,15 @@ void KukaHardwareInterface::start()
 
 void KukaHardwareInterface::configure()
 {
-  const std::string param_addr = "rsi/listen_address";
-  const std::string param_port = "rsi/listen_port";
-
-  if (nh_.getParam(param_addr, local_host_) && nh_.getParam(param_port, local_port_))
+  if (nh_.getParam("rsi/listen_address", local_host_) && nh_.getParam("rsi/listen_port", local_port_))
   {
     ROS_INFO_STREAM_NAMED("kuka_hardware_interface",
                           "Setting up RSI server on: (" << local_host_ << ", " << local_port_ << ")");
   }
   else
   {
-    std::string msg = "Failed to get RSI listen address or listen port from"
-    " parameter server (looking for '" + param_addr + "' and '" + param_port + "')";
-    ROS_ERROR_STREAM(msg);
-    throw std::runtime_error(msg);
+    ROS_ERROR("Failed to get RSI listen address or listen port from parameter server!");
+    throw std::runtime_error("Failed to get RSI listen address or listen port from parameter server.");
   }
   rt_rsi_pub_.reset(new realtime_tools::RealtimePublisher<std_msgs::String>(nh_, "rsi_xml_doc", 3));
 }

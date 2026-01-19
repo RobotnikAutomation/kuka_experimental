@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--TODO parametrize the versions of the tool reading from some global variable-->
+<launch>
+	
+ 
+  <!-- robot -->
+  <arg name="robot_ns" default="$(optenv ROBOT_ID kuka_robot)"/>
+  
+  <group ns="$(arg robot_ns)">
+  
+	<!-- cartesian movement -->
+	<include file="$(find kuka_rsi_cartesian_hw_interface)/test/test_hardware_interface.launch">
+		<arg name="sim" value="false"/>
+	</include>	
+	
+  </group>
+  
+ 
+
+
+  <!--PAD control -->
+  <arg name="pad_ns" default="$(optenv PAD_ID kuka_pad)"/>
+
+  <group ns="$(arg pad_ns)">
+    <include file="$(find robotnik_trajectory_pad)/launch/robotnik_trajectory_pad.launch"/>
+  </group>
+  
+ 
+
+</launch>

@@ -57,7 +57,7 @@
 #include <hardware_interface/robot_hw.h>
 
 // Timers
-/* #include <chrono> */
+#include <chrono>
 
 // UDP server
 #include <kuka_rsi_hw_interface/udp_server.h>
@@ -65,10 +65,6 @@
 // RSI
 #include <kuka_rsi_hw_interface/rsi_state.h>
 #include <kuka_rsi_hw_interface/rsi_command.h>
-
-// SRV
-#include <kuka_rsi_hw_interface/write_8_outputs.h>
-
 
 namespace kuka_rsi_hw_interface
 {
@@ -94,7 +90,6 @@ private:
   std::vector<double> joint_position_command_;
   std::vector<double> joint_velocity_command_;
   std::vector<double> joint_effort_command_;
-  std::vector<bool> digital_output_;
 
   // RSI
   RSIState rsi_state_;
@@ -117,7 +112,6 @@ private:
   ros::Duration control_period_;
   ros::Duration elapsed_time_;
   double loop_hz_;
-  double krc_multiplier_;
 
   // Interfaces
   hardware_interface::JointStateInterface joint_state_interface_;
@@ -128,15 +122,10 @@ public:
   KukaHardwareInterface();
   ~KukaHardwareInterface();
 
-  //Test section for adding digital output control
-  bool write_8_digital_outputs(kuka_rsi_hw_interface::write_8_outputs::Request &req, kuka_rsi_hw_interface::write_8_outputs::Response &res);
-
   void start();
   void configure();
   bool read(const ros::Time time, const ros::Duration period);
   bool write(const ros::Time time, const ros::Duration period);
-
-  ros::Duration getPeriod() const { return control_period_; }
 
 };
 

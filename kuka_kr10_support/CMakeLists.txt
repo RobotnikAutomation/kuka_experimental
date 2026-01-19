@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 2.8.3)
 
 project(kuka_kr10_support)
 
@@ -8,7 +8,6 @@ catkin_package()
 
 if (CATKIN_ENABLE_TESTING)
   find_package(roslaunch REQUIRED)
-  roslaunch_add_file_check(test/roslaunch_test_kr10r900_2.xml)
   roslaunch_add_file_check(test/roslaunch_test_kr10r1100sixx.xml)
 endif()
 

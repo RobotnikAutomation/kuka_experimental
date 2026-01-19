@@ -42,12 +42,10 @@
 
 #include <iostream>
 #include <string>
-#include <stdexcept>
 
 // Select includes
 #include <sys/time.h>
 
-#include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -66,7 +64,9 @@ public:
   {
     sockfd_ = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd_ < 0)
-      throw std::runtime_error("Error opening socket: " + std::string(strerror(errno)));
+    {
+      std::cout << "ERROR opening socket" << std::endl;
+    }
     optval = 1;
     setsockopt(sockfd_, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval , sizeof(int));
     memset(&serveraddr_, 0, sizeof(serveraddr_));
@@ -74,7 +74,9 @@ public:
     serveraddr_.sin_addr.s_addr = inet_addr(local_host_.c_str());
     serveraddr_.sin_port = htons(local_port_);
     if (bind(sockfd_, (struct sockaddr *) &serveraddr_, sizeof(serveraddr_)) < 0)
-      throw std::runtime_error("Error binding socket: " + std::string(strerror(errno)));
+    {
+      std::cout << "ERROR on binding socket" << std::endl;
+    }
     clientlen_ = sizeof(clientaddr_);
   }
 

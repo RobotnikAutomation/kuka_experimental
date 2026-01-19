@@ -28,9 +28,14 @@ def create_rsi_xml_rob(act_joint_pos, setpoint_joint_pos, timeout_count, ipoc):
 
 def parse_rsi_xml_sen(data):
     root = ET.fromstring(data)
-    AK = root.find('AK').attrib
-    desired_joint_correction = np.array([AK['A1'], AK['A2'], AK['A3'],
-                                         AK['A4'], AK['A5'], AK['A6']]).astype(np.float64)
+    if root.find('AK')>0:
+        RK = root.find('AK').attrib
+        desired_joint_correction = np.array([AK['A1'], AK['A2'], AK['A3'],
+                                             AK['A4'], AK['A5'], AK['A6']]).astype(np.float64)
+    if root.find('RK')>0:
+        RK = root.find('RK').attrib
+        desired_joint_correction = np.array([RK['X'], RK['Y'], RK['Z'],
+                                             RK['A'], RK['B'], RK['C']]).astype(np.float64)
     IPOC = root.find('IPOC').text
     return desired_joint_correction, int(IPOC)
 

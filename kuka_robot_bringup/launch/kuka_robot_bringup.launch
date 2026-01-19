@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!--TODO parametrize the versions of the tool reading from some global variable-->
+<launch>
+	
+  <arg name="finger_id" default="$(optenv FINGER_ID 3)"/>
+  
+  <!-- Load robot description to parameter server -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find kuka_robot_bringup)/robot/kr120toolv$(arg finger_id).xacro'"/>
+
+  <!-- robot -->
+  <arg name="robot_ns" default="$(optenv ROBOT_ID kuka_robot)"/>
+  
+  <group ns="$(arg robot_ns)">
+  
+	<!-- cartesian movement -->
+	<include file="$(find kuka_rsi_cartesian_hw_interface)/test/test_hardware_interface.launch">
+		<arg name="sim" value="false"/>
+	</include>	
+	
+  </group>
+  
+  <!-- tool -->
+  <arg name="tool_ns" default="$(optenv TOOL_ID kuka_tool)"/>
+
+  <group ns="$(arg tool_ns)">
+
+	<!-- start robotnik_base_hw -->
+ 	<include file="$(find robotnik_base_hw)/launch/robotnik_base_hw.launch"/>
+
+    <!-- start rb1_base_control -->
+    <include file="$(find kuka_tool_control)/launch/kuka_tool_control.launch"/>
+
+  </group>
+  
+  <!-- merge the robot_ns/joint_states and tool_ns/joint_states into /joint_states -->
+  <node name="robot_joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+	<rosparam param="source_list">["kuka_robot/joint_states","kuka_tool/joint_states"]</rosparam> 
+  </node>
+
+  <!-- robot_state_publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <!-- TODO: este nodo puede que deba estar dentro del grupo de la tool -->
+  <node name="kuka_tool_finger_node" pkg="kuka_tool_finger" type="kuka_tool_finger_node" output="screen">
+	<rosparam command="load" file="$(find kuka_tool_finger)/config/kuka_tool_finger_node.yaml" />
+  </node>
+
+
+  <!--PAD control -->
+  <arg name="pad_ns" default="$(optenv PAD_ID kuka_pad)"/>
+
+  <group ns="$(arg pad_ns)">
+    <include file="$(find robotnik_trajectory_pad)/launch/robotnik_trajectory_pad.launch"/>
+  </group>
+  
+  
+  <!-- Gauges -->
+  <arg name="gauges_ns" default="$(optenv PAD_ID kuka_gauges)"/>
+
+  <group ns="$(arg gauges_ns)">
+    <include file="$(find phidget_load)/launch/gauge_kuka.launch"/>
+  </group>
+  
+  <!--rviz launch-->
+  <!--node name="rviz" pkg="rviz" type="rviz" args="-d $(find kuka_robot_bringup)/rviz/rviz.rviz" required="true" /-->
+  
+  <!--rqt gui -->
+  <!--node name="robotnik_gui" pkg="rqt_kuka" type="rqt_kuka"/-->
+
+</launch>
