@@ -75,42 +75,42 @@ int main(int argc, char** argv)
   
   // Run as fast as possible
   while (ros::ok())
-  //while (!g_quit)
   {
-	  //clock_gettime(CLOCK_REALTIME,&tvalMid2);
-    // Receive current state from robot
-    if (!kuka_rsi_cartesian_hw_interface.read(timestamp, period))
+    try
     {
-      ROS_FATAL_NAMED("kuka_hardware_interface", "Failed to read state from robot. Shutting down!");
-      ros::shutdown();
+      if (!kuka_rsi_cartesian_hw_interface.read(timestamp, period))
+      {
+        throw std::runtime_error("Failed to read state from robot.");
+      }
+    
+      timestamp = ros::Time::now();
+      stopwatch_now = std::chrono::steady_clock::now();
+      period.fromSec(std::chrono::duration_cast<std::chrono::duration<double>>(stopwatch_now - stopwatch_last).count());
+      stopwatch_last = stopwatch_now;
+    
+      kuka_rsi_cartesian_hw_interface.write(timestamp, period);
     }
-
-    // Get current time and elapsed time since last read
-    timestamp = ros::Time::now();
-    stopwatch_now = std::chrono::steady_clock::now();
-    period.fromSec(std::chrono::duration_cast<std::chrono::duration<double>>(stopwatch_now - stopwatch_last).count());
-    stopwatch_last = stopwatch_now;
-
-    // Update the controllers
-    //controller_manager.update(timestamp, period);
-	/*clock_gettime(CLOCK_REALTIME,&tvalMid);
-	int microseconds_interval2=((tvalMid.tv_sec - tvalMid2.tv_sec)*1000000000L
-          +tvalMid.tv_nsec) - tvalMid2.tv_nsec;
-           if(microseconds_interval2/1000>4500)
-				//ROS_INFO("time  read  microseconds %d",microseconds_interval2/1000);
-    */
-    // Send new setpoint to robot
-    kuka_rsi_cartesian_hw_interface.write(timestamp, period);
-	/*clock_gettime(CLOCK_REALTIME,&tvalAfter1);
-	int microseconds_interval=((tvalAfter1.tv_sec - tvalBefore1.tv_sec)*1000000000L
-           +tvalAfter1.tv_nsec) - tvalBefore1.tv_nsec;
-     if(microseconds_interval2/1000>4500){
-				//ROS_INFO("time interval read+write microseconds %d",microseconds_interval/1000);
-				//ROS_INFO("time  write microseconds %d",(microseconds_interval-microseconds_interval2)/1000);
-			}
-     clock_gettime(CLOCK_REALTIME,&tvalBefore1);
-    */
-	
+    catch (const std::exception& e)
+    {
+      ROS_ERROR_STREAM_THROTTLE(2.0, "Lost connection to robot: " << e.what());
+      ROS_INFO_STREAM("Attempting to reconnect to the robot...");
+    
+      bool reconnected = false;
+      while (ros::ok() && !reconnected)
+      {
+        try
+        {
+          kuka_rsi_cartesian_hw_interface.start();  // Try reconnecting
+          reconnected = true;
+          ROS_INFO_STREAM("Reconnected to robot.");
+        }
+        catch (const std::exception& ex)
+        {
+          ROS_WARN_STREAM_THROTTLE(5.0, "Reconnect failed: " << ex.what());
+          ros::Duration(1.0).sleep();  // wait before retrying
+        }
+      }
+    }
   }
 
   spinner.stop();

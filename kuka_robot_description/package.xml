@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>kuka_robot_description</name>
+  <version>0.1.0</version>
+  <description>Robot description package for KUKA industrial arm assets.</description>
+
+  <maintainer email="robot@example.com">robot</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+    <architecture_independent/>
+  </export>
+</package>
