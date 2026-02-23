@@ -1,0 +1,16 @@
+<launch>
+  <node
+    pkg="kuka_rsi_cartesian_hw_interface"
+    type="moving_only_a6.py"
+    name="moving_only_a6"
+    output="screen">
+    <param name="a1_value" value="0.0"/>
+    <param name="a6_min" value="10.0"/>
+    <param name="a6_max" value="100.0"/>
+    <param name="duration" value="60.0"/>
+    <param name="pause_between_moves" value="10.0"/>
+    <param name="wait_timeout" value="30.0"/>
+    <param name="a1a6_service" value="/kuka_robot/setKukaA1A6"/>
+    <param name="moving_topic" value="/kuka_robot/kuka_moving"/>
+  </node>
+</launch>

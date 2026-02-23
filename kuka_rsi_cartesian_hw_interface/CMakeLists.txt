@@ -79,3 +79,8 @@ install(
 install(
   TARGETS kuka_cartesian_hardware_interface_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+catkin_install_python(PROGRAMS
+  scripts/moving_only_a6.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
