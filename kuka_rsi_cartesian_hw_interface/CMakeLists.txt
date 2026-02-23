@@ -55,6 +55,10 @@ include_directories(
 add_library(kuka_cartesian_hardware_interface
   src/kuka_cartesian_hardware_interface.cpp
 )
+add_dependencies(kuka_cartesian_hardware_interface
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
 
 target_link_libraries(kuka_cartesian_hardware_interface
   ${catkin_LIBRARIES}
@@ -64,6 +68,10 @@ target_link_libraries(kuka_cartesian_hardware_interface
 
 add_executable(kuka_cartesian_hardware_interface_node
   src/kuka_cartesian_hardware_interface_node.cpp
+)
+add_dependencies(kuka_cartesian_hardware_interface_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
 )
 
 target_link_libraries(kuka_cartesian_hardware_interface_node
