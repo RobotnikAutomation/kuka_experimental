@@ -34,7 +34,7 @@
  *********************************************************************/
 
 /*
- * Author: Lars Tingelstad <lars.tingelstad@ntnu.no>
+ * Author: Ángel Soriano <asoriano@robotnik.es>
  */
 
 #include <kuka_rsi_cartesian_hw_interface/kuka_cartesian_hardware_interface.h>

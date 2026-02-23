@@ -34,7 +34,7 @@
  *********************************************************************/
 
 /*
- * Author: Lars Tingelstad
+ * Author: Ángel Soriano
  */
 
 #ifndef KUKA_RSI_HARDWARE_INTERFACE_KUKA_HARDWARE_INTERFACE_
