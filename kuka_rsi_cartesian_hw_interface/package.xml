@@ -28,6 +28,7 @@
   <depend>realtime_tools</depend>
   <depend>rospy</depend>
   <depend>roscpp</depend>
+  <depend>std_srvs</depend>
   <depend>std_msgs</depend>
 
 </package>

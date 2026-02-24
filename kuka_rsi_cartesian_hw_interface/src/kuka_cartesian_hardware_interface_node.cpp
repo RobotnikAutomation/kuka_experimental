@@ -39,7 +39,26 @@
 
 #include <kuka_rsi_cartesian_hw_interface/kuka_cartesian_hardware_interface.h>
 
+#include <atomic>
 #include <sys/time.h>
+#include <std_srvs/Trigger.h>
+
+namespace
+{
+std::atomic<bool> g_force_udp_reconnect(false);
+
+bool forceUdpReconnect(
+    std_srvs::Trigger::Request& request,
+    std_srvs::Trigger::Response& response)
+{
+  (void)request;
+  g_force_udp_reconnect.store(true);
+  response.success = true;
+  response.message = "UDP reconnect requested";
+  ROS_WARN_STREAM("Force UDP reconnect requested via /force_udp_reconnect");
+  return true;
+}
+}  // namespace
 
 int main(int argc, char** argv)
 {
@@ -51,6 +70,8 @@ int main(int argc, char** argv)
   spinner.start();
 
   ros::NodeHandle nh;
+  ros::ServiceServer force_udp_reconnect_service =
+      nh.advertiseService("force_udp_reconnect", forceUdpReconnect);
 
   kuka_rsi_cartesian_hw_interface::KukaHardwareInterface kuka_rsi_cartesian_hw_interface;
   kuka_rsi_cartesian_hw_interface.configure();
@@ -92,6 +113,11 @@ int main(int argc, char** argv)
   {
     try
     {
+      if (g_force_udp_reconnect.exchange(false))
+      {
+        throw std::runtime_error("Forced UDP reconnect requested by service");
+      }
+
       if (!kuka_rsi_cartesian_hw_interface.read(timestamp, period))
       {
         throw std::runtime_error("Failed to read state from robot.");

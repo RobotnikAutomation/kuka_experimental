@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   joint_limits_interface
   realtime_tools
   roscpp
+  std_srvs
   std_msgs
   robotnik_msgs
   robotnik_trajectory_pad
@@ -38,6 +39,7 @@ catkin_package(
     hardware_interface
     joint_limits_interface
     roscpp
+    std_srvs
     std_msgs
     robotnik_msgs	
     message_runtime
