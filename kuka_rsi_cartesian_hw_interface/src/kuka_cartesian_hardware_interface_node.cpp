@@ -34,7 +34,7 @@
  *********************************************************************/
 
 /*
- * Author: Lars Tingelstad <lars.tingelstad@ntnu.no>
+ * Author: Ángel Soriano <asoriano@robotnik.es>
  */
 
 #include <kuka_rsi_cartesian_hw_interface/kuka_cartesian_hardware_interface.h>
@@ -63,7 +63,21 @@ int main(int argc, char** argv)
   //struct timespec  tvalBefore1, tvalAfter1, tvalMid, tvalMid2;
   //controller_manager::ControllerManager controller_manager(&kuka_rsi_hw_interface, nh);
 
-  kuka_rsi_cartesian_hw_interface.start();
+  bool initial_connected = false;
+  while (ros::ok() && !initial_connected)
+  {
+    try
+    {
+      kuka_rsi_cartesian_hw_interface.start();
+      initial_connected = true;
+      ROS_INFO_STREAM("Initial connection to robot established.");
+    }
+    catch (const std::exception& ex)
+    {
+      ROS_WARN_STREAM_THROTTLE(5.0, "Initial connection failed: " << ex.what());
+      ros::Duration(1.0).sleep();
+    }
+  }
 
   // Get current time and elapsed time since last read
   timestamp = ros::Time::now();

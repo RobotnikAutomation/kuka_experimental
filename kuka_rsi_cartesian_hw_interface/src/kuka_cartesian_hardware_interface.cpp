@@ -100,16 +100,6 @@ namespace kuka_rsi_cartesian_hw_interface
 	//Inicialization
 	void KukaHardwareInterface::start()
 	{
-		// for the service
-		cartesian_correction_request_ = false;
-		cartesian_correction_request_ = false;
-		robot_is_moving_msg_.data = false;
-		joint_correction_request_ = false;
-		counter_not_moving_ = 0;
-		A6_in_valid_range = true;
-		move_relative_to_tool_ = false;
-		z_force_limit_reached_ = false;
-		accumulated_A1_rotation_rad = 0.0;
 		// Wait for connection from robot
 		server_.reset(new UDPServer(local_host_, local_port_));
 
@@ -123,14 +113,46 @@ namespace kuka_rsi_cartesian_hw_interface
 			bytes = server_->recv(in_buffer_);
 		}
 
-		rsi_state_ = RSIState(in_buffer_);
-		for (std::size_t i = 0; i < n_dof_; ++i)
+		const RSIState initial_state(in_buffer_);
 		{
-			joint_position_[i] = DEG2RAD * rsi_state_.positions[i];
-			joint_position_command_[i] = joint_position_[i];
-			rsi_initial_command_[i] = rsi_state_.initial_cart_position[i];
+			std::lock_guard<std::mutex> lock(state_mutex_);
+			// for the service
+			cartesian_correction_request_ = false;
+			joint_correction_request_ = false;
+			robot_is_moving_msg_.data = false;
+			counter_not_moving_ = 0;
+			A6_in_valid_range = true;
+			move_relative_to_tool_ = false;
+			z_force_limit_reached_ = false;
+			accumulated_A1_rotation_rad = 0.0;
+			cartesian_pad_cmds_ = CartesianPadCommand();
+
+			rsi_state_ = initial_state;
+			for (std::size_t i = 0; i < n_dof_; ++i)
+			{
+				joint_position_[i] = DEG2RAD * rsi_state_.positions[i];
+				joint_position_command_[i] = joint_position_[i];
+				rsi_initial_command_[i] = rsi_state_.initial_cart_position[i];
+			}
+			ipoc_ = rsi_state_.ipoc;
+
+			// Avoid duplicated entries after reconnects.
+			realtime_pub_->msg_.name.clear();
+			realtime_pub_->msg_.position.clear();
+			realtime_pub_->msg_.velocity.clear();
+			realtime_pub_->msg_.effort.clear();
+			realtime_pub_->msg_.name.reserve(n_dof_);
+			realtime_pub_->msg_.position.reserve(n_dof_);
+			realtime_pub_->msg_.velocity.reserve(n_dof_);
+			realtime_pub_->msg_.effort.reserve(n_dof_);
+			for (unsigned i = 0; i < n_dof_; i++)
+			{
+				realtime_pub_->msg_.name.push_back(joint_names_[i]);
+				realtime_pub_->msg_.position.push_back(0.0);
+				realtime_pub_->msg_.velocity.push_back(0.0);
+				realtime_pub_->msg_.effort.push_back(0.0);
+			}
 		}
-		ipoc_ = rsi_state_.ipoc;
 		// out_buffer_ = RSICommand('R',rsi_initial_command_, ipoc_).xml_doc;
 		out_buffer_ = RSICommand(rsi_initial_command_, ipoc_).xml_doc;
 		ROS_INFO("SENT to robot:%s", out_buffer_.c_str());
@@ -141,15 +163,6 @@ namespace kuka_rsi_cartesian_hw_interface
 		ROS_INFO_STREAM_NAMED("kuka_hardware_interface", "Got connection from robot");
 		// initialize time
 		last_publish_time_ = ros::Time::now();
-		// get joints and allocate message
-		for (unsigned i = 0; i < n_dof_; i++)
-		{
-			// joint_state_.push_back(hw->getHandle(joint_names[i]));
-			realtime_pub_->msg_.name.push_back(joint_names_[i]);
-			realtime_pub_->msg_.position.push_back(0.0);
-			realtime_pub_->msg_.velocity.push_back(0.0);
-			realtime_pub_->msg_.effort.push_back(0.0);
-		}
 	}
 
 	void KukaHardwareInterface::configure()
@@ -170,6 +183,7 @@ namespace kuka_rsi_cartesian_hw_interface
 	// callback from topic kuka_pad/cartesian_move
 	void KukaHardwareInterface::padCallback(const robotnik_trajectory_pad::CartesianEuler::ConstPtr &cartesian_move)
 	{
+		std::lock_guard<std::mutex> lock(state_mutex_);
 
 		cartesian_pad_cmds_.x = cartesian_move->x;
 		cartesian_pad_cmds_.y = cartesian_move->y;
@@ -192,7 +206,7 @@ namespace kuka_rsi_cartesian_hw_interface
 		clock_gettime(CLOCK_REALTIME, &tvalMid2);
 		in_buffer_.resize(1024);
 
-		if (server_->recv(in_buffer_) == 0)
+		if (server_->recv(in_buffer_) <= 0)
 		{
 			return false;
 		}
@@ -203,7 +217,31 @@ namespace kuka_rsi_cartesian_hw_interface
 			rt_rsi_pub_->unlockAndPublish();
 		}
 
-		rsi_state_ = RSIState(in_buffer_);
+		RSIState parsed_state;
+		try
+		{
+			parsed_state = RSIState(in_buffer_);
+		}
+		catch (const std::exception& e)
+		{
+			ROS_ERROR_STREAM_THROTTLE(1.0, "Invalid RSI frame: " << e.what());
+			return false;
+		}
+
+		robotnik_msgs::Cartesian_Euler_pose current_cartesian_pose_msg;
+		{
+			std::lock_guard<std::mutex> lock(state_mutex_);
+			rsi_state_ = parsed_state;
+			current_cartesian_robot_pose_.x = rsi_state_.cart_position[0];
+			current_cartesian_robot_pose_.y = rsi_state_.cart_position[1];
+			current_cartesian_robot_pose_.z = rsi_state_.cart_position[2];
+			current_cartesian_robot_pose_.A = rsi_state_.cart_position[3];
+			current_cartesian_robot_pose_.B = rsi_state_.cart_position[4];
+			current_cartesian_robot_pose_.C = rsi_state_.cart_position[5];
+			current_cartesian_pose_msg = current_cartesian_robot_pose_;
+			ipoc_ = rsi_state_.ipoc;
+		}
+
 		// limit rate of publishing
 		if (publish_rate_ > 0.0 && last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time)
 		{
@@ -217,32 +255,24 @@ namespace kuka_rsi_cartesian_hw_interface
 				// update and publish by /joint_states
 				for (std::size_t i = 0; i < n_dof_; ++i)
 				{
-					realtime_pub_->msg_.position[i] = DEG2RAD * rsi_state_.positions[i];
+					realtime_pub_->msg_.position[i] = DEG2RAD * parsed_state.positions[i];
 
 					realtime_pub_->msg_.velocity[i] = 0;
 
 					realtime_pub_->msg_.effort[i] = 0;
 				}
 
-				// Update the absolute cartesian pose of the robot
-				current_cartesian_robot_pose_.x = rsi_state_.cart_position[0];
-				current_cartesian_robot_pose_.y = rsi_state_.cart_position[1];
-				current_cartesian_robot_pose_.z = rsi_state_.cart_position[2];
-				current_cartesian_robot_pose_.A = rsi_state_.cart_position[3];
-				current_cartesian_robot_pose_.B = rsi_state_.cart_position[4];
-				current_cartesian_robot_pose_.C = rsi_state_.cart_position[5];
-
 				realtime_pub_->unlockAndPublish();
-				cartesian_robot_pose_pub_.publish(current_cartesian_robot_pose_);
+				cartesian_robot_pose_pub_.publish(current_cartesian_pose_msg);
 			}
 		}
-		ipoc_ = rsi_state_.ipoc;
 
 		return true;
 	}
 
 	bool KukaHardwareInterface::write(const ros::Time time, const ros::Duration period)
 	{
+		std::lock_guard<std::mutex> lock(state_mutex_);
 		out_buffer_.resize(1024);
 
 		RSIMessageStruct RSI_message;
@@ -315,7 +345,7 @@ namespace kuka_rsi_cartesian_hw_interface
 			RSI_message.y = cartesian_step_[1] * slope;
 			RSI_message.z = cartesian_step_[2] * slope;
 
-			ROS_INFO("Steps: %f %f", RSI_message.x, RSI_message.y);
+			ROS_DEBUG_THROTTLE(1.0, "Steps: %f %f", RSI_message.x, RSI_message.y);
 			
 			// --- Comprobación y ajuste del ángulo del eje A (rotación) ---
 			
@@ -323,7 +353,7 @@ namespace kuka_rsi_cartesian_hw_interface
 			if (!A6_in_valid_range)
 			{
 				angle_A_error = copysign(angle_A_error, initial_angle_A_error_);
-				ROS_INFO("trajectory with A6 out of range angle error: %f first angle error: %f", angle_A_error, initial_angle_A_error_);
+				ROS_DEBUG_THROTTLE(1.0, "Trajectory with A6 out of range angle error: %f first angle error: %f", angle_A_error, initial_angle_A_error_);
 			}
 
 			// Calcular el paso incremental para la rotación del eje A
@@ -405,13 +435,13 @@ namespace kuka_rsi_cartesian_hw_interface
 				fabs(prev_angle_C_error - angle_C_error) < 0.001)
 			{
 				counter_not_moving_++;
-				ROS_INFO("NOT MOVING, moved: %f angle: %f", 
+				ROS_DEBUG_THROTTLE(1.0, "NOT MOVING, moved: %f angle: %f", 
 					fabs(prev_distance_remaining_ - distance_remaining_), 
 					fabs(prev_angle_A_error - angle_A_error));
 			}
 			else
 			{
-				ROS_INFO(" MOVING, moved: %f", fabs(prev_distance_remaining_ - distance_remaining_));
+				ROS_DEBUG_THROTTLE(1.0, "MOVING, moved: %f", fabs(prev_distance_remaining_ - distance_remaining_));
 				prev_distance_remaining_ = distance_remaining_;
 				prev_angle_A_error = angle_A_error;
 				prev_angle_B_error = angle_B_error;
@@ -508,11 +538,11 @@ namespace kuka_rsi_cartesian_hw_interface
 				fabs(prev_A6_error - A6_current_error_) < MIN_STEP_A6)
 			{
 				counter_not_moving_++;
-				ROS_INFO("NOT MOVING A1 %f A6 %f", fabs(prev_A1_error - A1_current_error_), fabs(prev_A6_error - A6_current_error_));
+				ROS_DEBUG_THROTTLE(1.0, "NOT MOVING A1 %f A6 %f", fabs(prev_A1_error - A1_current_error_), fabs(prev_A6_error - A6_current_error_));
 			}
 			else
 			{
-				ROS_INFO(" MOVING");
+				ROS_DEBUG_THROTTLE(1.0, "MOVING");
 				prev_A1_error = A1_current_error_;
 				prev_A6_error = A6_current_error_;
 				counter_not_moving_ = 0;
@@ -529,14 +559,14 @@ namespace kuka_rsi_cartesian_hw_interface
 			if (z_force_limit_reached_ && RSI_message.z < 0)
 			{
 				RSI_message.z = 0.0;
-				ROS_INFO("Blocking -Z");
+				ROS_WARN_THROTTLE(1.0, "Blocking -Z due to force limit");
 			}
 			//	limits of angle of the tool
 			if ((rsi_state_.positions[5] >= UP_LIMIT_A6 && cartesian_pad_cmds_.yaw > 0) || 
 			(rsi_state_.positions[5] <= LOW_LIMIT_A6 && cartesian_pad_cmds_.yaw < 0))
 			{
 				// ROS_INFO(" PAD: %f Posicion A:%f Axis6: %f",cartesian_pad_cmds_.yaw,rsi_state_.cart_position[3],rsi_state_.positions[5]);
-				ROS_INFO("Limits of Angle A reached. PAD: %f Posicion A:%f Axis6: %f", cartesian_pad_cmds_.yaw, rsi_state_.cart_position[3], rsi_state_.positions[5]);
+				ROS_WARN_THROTTLE(1.0, "Limits of Angle A reached. PAD: %f Posicion A:%f Axis6: %f", cartesian_pad_cmds_.yaw, rsi_state_.cart_position[3], rsi_state_.positions[5]);
 			}
 			else
 			{	// yaw
@@ -550,18 +580,31 @@ namespace kuka_rsi_cartesian_hw_interface
 		}
 
 		// Limits of -x to avoid wall collision. Taking into account temporal correction
-		float x_disp_real = (RSI_message.x + 
-			RSI_message.y * sin(accumulated_A1_rotation_rad)) / cos(accumulated_A1_rotation_rad); // corrected x
+		const float cos_a1 = cos(accumulated_A1_rotation_rad);
+		float x_disp_real = RSI_message.x;
+		if (fabs(cos_a1) > 1e-3f)
+		{
+			x_disp_real = (RSI_message.x + RSI_message.y * sin(accumulated_A1_rotation_rad)) / cos_a1; // corrected x
+		}
+		else
+		{
+			ROS_WARN_THROTTLE(2.0, "Skipping corrected X displacement due to small cos(A1)=%f", cos_a1);
+		}
+		if (!std::isfinite(x_disp_real))
+		{
+			x_disp_real = RSI_message.x;
+			ROS_WARN_THROTTLE(2.0, "Non-finite corrected X displacement detected");
+		}
 		if (rsi_state_.cart_position[0] <= MIN_X_LIMIT && x_disp_real < 0)
 		{
 			RSI_message.x = 0;
 			RSI_message.y = 0;
-			ROS_INFO("-x out of range");
+			ROS_WARN_THROTTLE(1.0, "-x out of range");
 		}
 		if (rsi_state_.cart_position[2] >= MAX_Z_LIMIT && RSI_message.z > 0)
 		{
 			RSI_message.z = 0;
-			ROS_INFO("+z out of range");
+			ROS_WARN_THROTTLE(1.0, "+z out of range");
 		}
 
 		// out_buffer_ = RSICommand('R',RSI_message.toVector(), ipoc_).xml_doc;
@@ -604,6 +647,7 @@ namespace kuka_rsi_cartesian_hw_interface
 
 	bool KukaHardwareInterface::moveJointsA1andA6(kuka_rsi_cartesian_hw_interface::set_A1_A6::Request &request, kuka_rsi_cartesian_hw_interface::set_A1_A6::Response &response)
 	{
+		std::lock_guard<std::mutex> lock(state_mutex_);
 		counter_not_moving_ = 0;
 		for (std::size_t i = 0; i < n_dof_; ++i) // position at the start of the service
 		{
@@ -626,6 +670,7 @@ namespace kuka_rsi_cartesian_hw_interface
 
 		start_A1_error_request_ = prev_A1_error;
 		start_A6_error_request_ = prev_A6_error;
+		cartesian_correction_request_ = false;
 		joint_correction_request_ = true;
 		response.ret = true;
 		return true;
@@ -633,22 +678,16 @@ namespace kuka_rsi_cartesian_hw_interface
 	// Service to enable or disable the movement relative to the tool coordinates with the pad
 	bool KukaHardwareInterface::setMoveRelTool(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response)
 	{
-		if (request.data == true)
-		{
-			move_relative_to_tool_ = true;
-			response.success = true;
-		}
-		else if (request.data == false)
-		{
-			move_relative_to_tool_ = false;
-			response.success = true;
-		}
+		std::lock_guard<std::mutex> lock(state_mutex_);
+		move_relative_to_tool_ = request.data;
+		response.success = true;
 		return true;
 	}
 	
 	// Topic to read the pressing weight made by the tool and enable to block the negative Z direction of movement of the pad
 	void KukaHardwareInterface::phidgetCallback(const std_msgs::Float64::ConstPtr &force_z_axis)
 	{
+		std::lock_guard<std::mutex> lock(state_mutex_);
 		// ROS_INFO("phidget received %f", force_z_axis->data);
 		if (force_z_axis->data >= Z_FORCE_UPPER_LIMIT)
 		{
@@ -665,6 +704,7 @@ namespace kuka_rsi_cartesian_hw_interface
 		robotnik_msgs::set_CartesianEuler_pose::Response &res,
 		float velocity_factor_param)
 	{
+		std::lock_guard<std::mutex> lock(state_mutex_);
 		// Se reinicia el contador de ciclos sin movimiento
 		counter_not_moving_ = 0;
 		// Se guarda la posición inicial del robot (para ejes 2 en adelante) 
@@ -722,7 +762,7 @@ namespace kuka_rsi_cartesian_hw_interface
 		else
 		{
 			A6_in_valid_range = true;
-			ROS_INFO("kuka_hardware_interface::LIMIT of A6 reached!");
+			ROS_DEBUG("kuka_hardware_interface::A6 within limits");
 		}
 		// Se calcula el paso incremental para cada eje de traslación (índices 0, 1 y 2)
 		for (std::size_t i = 0; i < n_dof_ - 3; ++i)
@@ -733,6 +773,7 @@ namespace kuka_rsi_cartesian_hw_interface
 				cartesian_step_[i] = step_abs * (cartesian_goal_pose_[i] - start_cartesian_pose_request_[i]) / total_distance_to_cover_;
 		}
 		// Se activa el modo de correcciones cartesianas
+		joint_correction_request_ = false;
 		cartesian_correction_request_ = true;
 		res.ret = true;
 		return true;
@@ -744,6 +785,7 @@ namespace kuka_rsi_cartesian_hw_interface
 		robotnik_msgs::set_CartesianEuler_pose::Response &res,
 		float velocity_factor_param)
 	{
+		std::lock_guard<std::mutex> lock(state_mutex_);
 		counter_not_moving_ = 0;
 
 		// Guardar la posición de referencia (para índices 2 en adelante)
@@ -832,6 +874,7 @@ namespace kuka_rsi_cartesian_hw_interface
 				cartesian_step_[i] = step_abs * (cartesian_goal_pose_[i] - start_cartesian_pose_request_[i]) / total_distance_to_cover_;
 		}
 		// Se activa el modo de correcciones cartesianas
+		joint_correction_request_ = false;
 		cartesian_correction_request_ = true;
 		res.ret = true;
 		return true;

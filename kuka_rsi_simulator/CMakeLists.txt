@@ -5,9 +5,11 @@ find_package(catkin REQUIRED)
 
 catkin_package()
 
-install(
-  PROGRAMS scripts/kuka_rsi_simulator
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts)
+catkin_install_python(PROGRAMS
+  scripts/kuka_rsi_simulator
+  scripts/kuka_robot_mock.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

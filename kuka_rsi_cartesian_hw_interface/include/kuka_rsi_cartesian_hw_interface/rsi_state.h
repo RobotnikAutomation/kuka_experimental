@@ -40,6 +40,7 @@
 #define KUKA_RSI_HW_INTERFACE_RSI_STATE_
 
 #include <string>
+#include <stdexcept>
 #include <tinyxml.h>
 
 namespace kuka_rsi_cartesian_hw_interface
@@ -87,14 +88,25 @@ RSIState::RSIState(std::string xml_doc) :
   bufferdoc.Parse(xml_doc_.c_str());
   // Get the Rob node:
   TiXmlElement* rob = bufferdoc.FirstChildElement("Rob");
+  if (!rob)
+  {
+    throw std::runtime_error("RSIState parse error: missing Rob element");
+  }
   // Extract axis specific actual position
   TiXmlElement* AIPos_el = rob->FirstChildElement("AIPos");
-  AIPos_el->Attribute("A1", &positions[0]);
-  AIPos_el->Attribute("A2", &positions[1]);
-  AIPos_el->Attribute("A3", &positions[2]);
-  AIPos_el->Attribute("A4", &positions[3]);
-  AIPos_el->Attribute("A5", &positions[4]);
-  AIPos_el->Attribute("A6", &positions[5]);
+  if (!AIPos_el)
+  {
+    throw std::runtime_error("RSIState parse error: missing AIPos element");
+  }
+  if (!AIPos_el->Attribute("A1", &positions[0]) ||
+      !AIPos_el->Attribute("A2", &positions[1]) ||
+      !AIPos_el->Attribute("A3", &positions[2]) ||
+      !AIPos_el->Attribute("A4", &positions[3]) ||
+      !AIPos_el->Attribute("A5", &positions[4]) ||
+      !AIPos_el->Attribute("A6", &positions[5]))
+  {
+    throw std::runtime_error("RSIState parse error: AIPos attributes missing");
+  }
   // Extract axis specific setpoint position
   /*TiXmlElement* ASPos_el = rob->FirstChildElement("ASPos");
   ASPos_el->Attribute("A1", &initial_positions[0]);
@@ -105,12 +117,19 @@ RSIState::RSIState(std::string xml_doc) :
   ASPos_el->Attribute("A6", &initial_positions[5]);*/
   // Extract cartesian actual position
   TiXmlElement* RIst_el = rob->FirstChildElement("RIst");
-  RIst_el->Attribute("X", &cart_position[0]);
-  RIst_el->Attribute("Y", &cart_position[1]);
-  RIst_el->Attribute("Z", &cart_position[2]);
-  RIst_el->Attribute("A", &cart_position[3]);
-  RIst_el->Attribute("B", &cart_position[4]);
-  RIst_el->Attribute("C", &cart_position[5]);
+  if (!RIst_el)
+  {
+    throw std::runtime_error("RSIState parse error: missing RIst element");
+  }
+  if (!RIst_el->Attribute("X", &cart_position[0]) ||
+      !RIst_el->Attribute("Y", &cart_position[1]) ||
+      !RIst_el->Attribute("Z", &cart_position[2]) ||
+      !RIst_el->Attribute("A", &cart_position[3]) ||
+      !RIst_el->Attribute("B", &cart_position[4]) ||
+      !RIst_el->Attribute("C", &cart_position[5]))
+  {
+    throw std::runtime_error("RSIState parse error: RIst attributes missing");
+  }
   // Extract cartesian actual set position
   /*TiXmlElement* RSol_el = rob->FirstChildElement("RSol");
   RSol_el->Attribute("X", &initial_cart_position[0]);
@@ -121,6 +140,10 @@ RSIState::RSIState(std::string xml_doc) :
   RSol_el->Attribute("C", &initial_cart_position[5]);*/
   // Get the IPOC timestamp
   TiXmlElement* ipoc_el = rob->FirstChildElement("IPOC");
+  if (!ipoc_el || !ipoc_el->FirstChild() || !ipoc_el->FirstChild()->Value())
+  {
+    throw std::runtime_error("RSIState parse error: missing IPOC");
+  }
   ipoc = std::stoull(ipoc_el->FirstChild()->Value());
 }
 

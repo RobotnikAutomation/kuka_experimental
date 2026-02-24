@@ -43,6 +43,7 @@
 // STL
 #include <vector>
 #include <string>
+#include <mutex>
 
 // ROS
 #include <ros/ros.h>
@@ -307,6 +308,7 @@ private:
   bool move_relative_to_tool_; //to move relatively to tool coordinates
   bool z_force_limit_reached_;
   float step_max_A1;
+  std::mutex state_mutex_;
 
 
  

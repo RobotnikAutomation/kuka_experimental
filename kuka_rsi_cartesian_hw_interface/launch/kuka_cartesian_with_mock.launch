@@ -1,0 +1,34 @@
+<launch>
+  <arg name="robot_ns" default="kuka_robot"/>
+  <arg name="rsi_hw_iface_ip" default="127.0.0.1"/>
+  <arg name="rsi_hw_iface_port" default="49152"/>
+  <arg name="cycle_time" default="0.004"/>
+  <arg name="socket_timeout" default="1.0"/>
+  <arg name="log_raw_xml" default="false"/>
+
+  <group ns="$(arg robot_ns)">
+    <rosparam file="$(find kuka_rsi_cartesian_hw_interface)/test/test_params_sim.yaml" command="load"/>
+
+    <node
+      name="kuka_cartesian_hardware_interface"
+      pkg="kuka_rsi_cartesian_hw_interface"
+      type="kuka_cartesian_hardware_interface_node"
+      output="screen"
+      required="true"
+      launch-prefix="nice -n -20"/>
+
+    <rosparam file="$(find kuka_rsi_cartesian_hw_interface)/config/hardware_controllers.yaml" command="load"/>
+    <rosparam file="$(find kuka_rsi_cartesian_hw_interface)/config/controller_joint_names.yaml" command="load"/>
+  </group>
+
+  <node
+    pkg="kuka_rsi_simulator"
+    type="kuka_robot_mock.py"
+    name="kuka_robot_mock"
+    args="$(arg rsi_hw_iface_ip) $(arg rsi_hw_iface_port)"
+    output="screen">
+    <param name="cycle_time" value="$(arg cycle_time)"/>
+    <param name="socket_timeout" value="$(arg socket_timeout)"/>
+    <param name="log_raw_xml" value="$(arg log_raw_xml)"/>
+  </node>
+</launch>

@@ -1,20 +1,18 @@
 <launch>
 
   <!--
-    This launch file provides a simulated KUKA robot running RSI
+    This launch file provides a mock KUKA RSI robot over UDP.
     Usage:
-      kuka_rsi_simulator.launch
+      roslaunch kuka_rsi_simulator kuka_robot_mock.launch
   -->
 
-  <!-- robot_ip: IP-address of the robot's socket-messaging server -->
   <arg name="rsi_hw_iface_ip" default="127.0.0.1"/>
   <arg name="rsi_hw_iface_port" default="49152"/>
   <arg name="cycle_time" default="0.004"/>
   <arg name="socket_timeout" default="1.0"/>
   <arg name="log_raw_xml" default="false"/>
 
-
-  <node pkg="kuka_rsi_simulator" type="kuka_rsi_simulator" name="kuka_rsi_simulator" args="$(arg rsi_hw_iface_ip) $(arg rsi_hw_iface_port)" output="screen">
+  <node pkg="kuka_rsi_simulator" type="kuka_robot_mock.py" name="kuka_robot_mock" args="$(arg rsi_hw_iface_ip) $(arg rsi_hw_iface_port)" output="screen">
     <param name="cycle_time" value="$(arg cycle_time)"/>
     <param name="socket_timeout" value="$(arg socket_timeout)"/>
     <param name="log_raw_xml" value="$(arg log_raw_xml)"/>
