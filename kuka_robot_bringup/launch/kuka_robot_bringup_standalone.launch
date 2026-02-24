@@ -20,9 +20,28 @@
 
   <!--PAD control -->
   <arg name="pad_ns" default="$(optenv PAD_ID kuka_pad)"/>
+  <arg name="launch_ps4_joystick" default="true"/>
+  <arg name="ps4_joy_dev" default="/dev/input/js_base"/>
+  <arg name="ps4_autorepeat_rate" default="20.0"/>
+  <arg name="ps4_deadzone" default="0.05"/>
+  <arg name="launch_itowa_joystick" default="true"/>
+  <arg name="itowa_port" default="/dev/ttyUSB_ITOWA"/>
+  <arg name="itowa_serial_reconnect_interval" default="1.0"/>
+  <arg name="itowa_serial_read_timeout" default="0.05"/>
+  <arg name="itowa_frame_timeout" default="0.2"/>
 
   <group ns="$(arg pad_ns)">
-    <include file="$(find robotnik_trajectory_pad)/launch/robotnik_trajectory_pad.launch"/>
+    <include file="$(find robotnik_trajectory_pad)/launch/robotnik_trajectory_pad.launch">
+      <arg name="launch_ps4_joystick" value="$(arg launch_ps4_joystick)"/>
+      <arg name="ps4_joy_dev" value="$(arg ps4_joy_dev)"/>
+      <arg name="ps4_autorepeat_rate" value="$(arg ps4_autorepeat_rate)"/>
+      <arg name="ps4_deadzone" value="$(arg ps4_deadzone)"/>
+      <arg name="launch_itowa_joystick" value="$(arg launch_itowa_joystick)"/>
+      <arg name="itowa_port" value="$(arg itowa_port)"/>
+      <arg name="itowa_serial_reconnect_interval" value="$(arg itowa_serial_reconnect_interval)"/>
+      <arg name="itowa_serial_read_timeout" value="$(arg itowa_serial_read_timeout)"/>
+      <arg name="itowa_frame_timeout" value="$(arg itowa_frame_timeout)"/>
+    </include>
   </group>
   
  

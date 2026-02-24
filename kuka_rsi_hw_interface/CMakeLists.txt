@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   controller_manager
   hardware_interface
   joint_limits_interface
+  kuka_rsi_cartesian_hw_interface
   realtime_tools
   roscpp
   std_msgs
@@ -22,11 +23,11 @@ catkin_package(
     include
   LIBRARIES
     kuka_hardware_interface
-    kuka_cartesian_hardware_interface
   CATKIN_DEPENDS
     controller_manager
     hardware_interface
     joint_limits_interface
+    kuka_rsi_cartesian_hw_interface
     roscpp
     std_msgs
   DEPENDS
@@ -44,8 +45,11 @@ include_directories(
 add_library(kuka_hardware_interface
   src/kuka_hardware_interface.cpp
 )
+add_dependencies(kuka_hardware_interface
+  ${catkin_EXPORTED_TARGETS}
+)
 
-target_link_libraries(kuka_hardware_interface kuka_cartesian_hardware_interface
+target_link_libraries(kuka_hardware_interface
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${TinyXML_LIBRARIES}
@@ -53,6 +57,9 @@ target_link_libraries(kuka_hardware_interface kuka_cartesian_hardware_interface
 
 add_executable(kuka_hardware_interface_node
   src/kuka_hardware_interface_node.cpp
+)
+add_dependencies(kuka_hardware_interface_node
+  ${catkin_EXPORTED_TARGETS}
 )
 
 target_link_libraries(kuka_hardware_interface_node

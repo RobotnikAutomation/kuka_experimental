@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   realtime_tools
   roscpp
   std_msgs
+  robotnik_msgs
   robotnik_trajectory_pad
   message_generation
   
