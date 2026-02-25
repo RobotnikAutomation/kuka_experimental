@@ -16,6 +16,15 @@ these packages are subject to change, without prior notice. Any available
 APIs are to be considered unstable and are not guaranteed to be complete 
 and / or functional.
 
+## Obuses project notes (Noetic)
+
+- Package `kuka_rsi_cartesian_hw_interface` now exposes:
+  - `force_udp_reconnect` (`std_srvs/Trigger`)
+- In the default bringup namespace (`kuka_robot`) this is available as:
+  - `/kuka_robot/force_udp_reconnect`
+- Intended use:
+  - request a runtime UDP reconnection to RSI without restarting bringup.
+
 
 [ROS-Industrial]: http://wiki.ros.org/Industrial
 [ROS wiki]: http://wiki.ros.org/kuka_experimental
