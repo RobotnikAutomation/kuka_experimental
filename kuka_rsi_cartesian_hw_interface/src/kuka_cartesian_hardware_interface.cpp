@@ -280,9 +280,6 @@ namespace kuka_rsi_cartesian_hw_interface
 		// Write part of the cartesian movement services, angle B and C is commented
 		if (cartesian_correction_request_ && !joint_correction_request_)
 		{
-			// In service
-			robot_is_moving_msg_.data = true;
-			
 			slope = 1;
 
 			distance_traveled_ = sqrt(
@@ -422,12 +419,11 @@ namespace kuka_rsi_cartesian_hw_interface
 				counter_not_moving_ >= MAX_CONT_NOT_MOVING)
 			{ // Last loop of the service or it stopped 100 cycles of not moving interrupts the service
 				cartesian_correction_request_ = false;
-				robot_is_moving_msg_.data = false;
 				A6_in_valid_range = true;
 				ROS_INFO("LAST ITERATION");
 			}
 
-			// Si el robot no ha variado significativamente su posición y orientación 
+			// Si el robot no ha variado significativamente su posición y orientación
 			// desde la última comprobación, se incrementa un contador de inactividad.
 			if (fabs(prev_distance_remaining_ - distance_remaining_) < 0.1 &&
 				fabs(prev_angle_A_error - angle_A_error) < 0.001 &&
@@ -455,8 +451,6 @@ namespace kuka_rsi_cartesian_hw_interface
 		{
 			float step_A1 = 0;
 			float step_A6 = 0;
-			// Se indica que el robot está en movimiento
-			robot_is_moving_msg_.data = true;
 			// ----- Cálculo de errores y desplazamientos para el eje A1 -----
 			// Se calcula el error actual para A1 y A6 (objetivo menos posición actual)
 			A1_current_error_ = joint_A1_goal_pose_ - rsi_state_.positions[0];
@@ -528,7 +522,6 @@ namespace kuka_rsi_cartesian_hw_interface
 				// Si los errores son muy pequeños o ha pasado mucho tiempo sin movimiento, se considera que se alcanzó el objetivo.
 				accumulated_A1_rotation_rad += deg2rad(rsi_state_.positions[0] - start_joint_pose_request_[0]);
 				joint_correction_request_ = false;
-				robot_is_moving_msg_.data = false;
 				A6_in_valid_range = true;
 				ROS_INFO("LAST ITERATION");
 			}
@@ -613,6 +606,11 @@ namespace kuka_rsi_cartesian_hw_interface
 		// ROS_INFO("Send to robot:%s", out_buffer_.c_str());
 		server_->send(out_buffer_);
 
+		// Publish moving state based on whether any non-zero command is being sent to the robot.
+		// This covers both service and pad movements uniformly.
+		robot_is_moving_msg_.data = (RSI_message.x != 0.0 || RSI_message.y != 0.0 ||
+		                              RSI_message.z != 0.0 || RSI_message.a != 0.0 ||
+		                              RSI_message.a1 != 0.0 || RSI_message.a6 != 0.0);
 		robot_is_moving_pub_.publish(robot_is_moving_msg_);
 
 		return true;
