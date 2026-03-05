@@ -180,6 +180,12 @@ namespace kuka_rsi_cartesian_hw_interface
 		rt_rsi_pub_.reset(new realtime_tools::RealtimePublisher<std_msgs::String>(nh_, "rsi_xml_doc", 3));
 	}
 
+	void KukaHardwareInterface::publishStopped()
+	{
+		robot_is_moving_msg_.data = false;
+		robot_is_moving_pub_.publish(robot_is_moving_msg_);
+	}
+
 	// callback from topic kuka_pad/cartesian_move
 	void KukaHardwareInterface::padCallback(const robotnik_trajectory_pad::CartesianEuler::ConstPtr &cartesian_move)
 	{

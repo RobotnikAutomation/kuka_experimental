@@ -133,6 +133,8 @@ int main(int argc, char** argv)
     catch (const std::exception& e)
     {
       ROS_ERROR_STREAM_THROTTLE(2.0, "Lost connection to robot: " << e.what());
+      // Publicar moving=false antes de reconectar para desbloquear la GUI
+      kuka_rsi_cartesian_hw_interface.publishStopped();
       ROS_INFO_STREAM("Attempting to reconnect to the robot...");
     
       bool reconnected = false;

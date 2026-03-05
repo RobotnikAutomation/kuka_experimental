@@ -106,7 +106,7 @@ static const float BREAKING_ANGLE = 5.0;                    // grados en los que
 
 static const float MIN_JOINT_STEP = 0.015;
 
-static const int MAX_CONT_NOT_MOVING = 100;               //iteraciones máximas para parar el control si el robot no se está moviendo
+static const int MAX_CONT_NOT_MOVING = 300;               //iteraciones máximas para parar el control si el robot no se está moviendo
 
 static const int MIN_X_LIMIT = -650;                      //lowest X mm value for the tcp
 static const int MAX_Z_LIMIT = 2500;                      //highest Z mm value for the tcp (caution with the ceiling)
@@ -333,6 +333,9 @@ public:
   bool moveJointsA1andA6(kuka_rsi_cartesian_hw_interface::set_A1_A6::Request &request, kuka_rsi_cartesian_hw_interface::set_A1_A6::Response &response);
   bool setMoveRelTool(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response);
   
+  // Publica robot_is_moving=false inmediatamente (usar antes de reconexión UDP)
+  void publishStopped();
+
   bool settingRelativeCartGoalPose(
 		robotnik_msgs::set_CartesianEuler_pose::Request &req,
 		robotnik_msgs::set_CartesianEuler_pose::Response &res,
