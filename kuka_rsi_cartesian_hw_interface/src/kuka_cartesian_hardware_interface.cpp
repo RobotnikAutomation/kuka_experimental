@@ -363,7 +363,19 @@ namespace kuka_rsi_cartesian_hw_interface
 		
 		    robot_is_moving_msg_.data = false;
 		    robot_is_moving_pub_.publish(robot_is_moving_msg_);
-		
+
+			if (fabs(last_rsi_command_.x) < 0.001 &&
+			    fabs(last_rsi_command_.y) < 0.001 &&
+			    fabs(last_rsi_command_.z) < 0.001 &&
+			    fabs(last_rsi_command_.a) < 0.001 &&
+			    fabs(last_rsi_command_.a1) < 0.001 &&
+			    fabs(last_rsi_command_.a6) < 0.001)
+			{
+			    // Ya se ha degradado a cero, safe stop puede resetearse
+			    safe_stop_ = false;
+			    ROS_INFO("Safe stop reset — robot ready to move again.");
+			}
+
 		    return true;
 		}
 		
