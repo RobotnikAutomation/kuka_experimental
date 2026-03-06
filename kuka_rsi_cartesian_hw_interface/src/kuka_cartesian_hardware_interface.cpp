@@ -90,6 +90,8 @@ namespace kuka_rsi_cartesian_hw_interface
 		set_kuka_joints_A1_and_A6_ = nh_.advertiseService("setKukaA1A6", &KukaHardwareInterface::moveJointsA1andA6, this);
 		set_moveRelTool_ = nh_.advertiseService("setMoveRelTool", &KukaHardwareInterface::setMoveRelTool, this);
 
+		modbus_emergency_sub_ = nh_.subscribe<std_msgs::Bool>("/modbus_emergency", 1, &KukaHardwareInterface::modbusEmergencyCallback, this);
+
 		initial_angle_A_error_ = 0;
 	}
 
@@ -186,6 +188,19 @@ namespace kuka_rsi_cartesian_hw_interface
 		robot_is_moving_pub_.publish(robot_is_moving_msg_);
 	}
 
+	void KukaHardwareInterface::modbusEmergencyCallback(const std_msgs::Bool::ConstPtr& msg)
+	{
+		modbus_emergency_.store(msg->data);
+		if (msg->data)
+		{
+			ROS_WARN_STREAM_THROTTLE(2.0, "Modbus emergency active — cancelling active movement requests");
+		}
+		else
+		{
+			ROS_INFO_STREAM("Modbus emergency cleared — robot stays stopped until a new movement command is received");
+		}
+	}
+
 	// callback from topic kuka_pad/cartesian_move
 	void KukaHardwareInterface::padCallback(const robotnik_trajectory_pad::CartesianEuler::ConstPtr &cartesian_move)
 	{
@@ -280,6 +295,21 @@ namespace kuka_rsi_cartesian_hw_interface
 	{
 		std::lock_guard<std::mutex> lock(state_mutex_);
 		out_buffer_.resize(1024);
+
+		// Software emergency stop: cancel any active movement and send zero RSI command.
+		// The emergency flag is latched — robot stays stopped until a new service call arrives.
+		if (modbus_emergency_.load())
+		{
+			cartesian_correction_request_ = false;
+			joint_correction_request_    = false;
+			cartesian_pad_cmds_          = CartesianPadCommand();
+			robot_is_moving_msg_.data    = false;
+			robot_is_moving_pub_.publish(robot_is_moving_msg_);
+			RSIMessageStruct zero_msg;
+			out_buffer_ = RSICommand(zero_msg.toVector(), ipoc_).xml_doc;
+			server_->send(out_buffer_);
+			return true;
+		}
 
 		RSIMessageStruct RSI_message;
 

@@ -310,8 +310,14 @@ private:
   float step_max_A1;
   std::mutex state_mutex_;
 
+  // Software emergency stop (modbus_emergency topic).
+  // When true, write() zeroes RSI output and cancels active movement requests.
+  // Latched: robot stays stopped until a new movement service call is received.
+  std::atomic<bool> modbus_emergency_{false};
+  ros::Subscriber modbus_emergency_sub_;
+  void modbusEmergencyCallback(const std_msgs::Bool::ConstPtr& msg);
 
- 
+
   //publisher
   boost::shared_ptr<realtime_tools::RealtimePublisher<sensor_msgs::JointState> > realtime_pub_;
 
