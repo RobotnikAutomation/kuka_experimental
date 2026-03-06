@@ -91,6 +91,7 @@ namespace kuka_rsi_cartesian_hw_interface
 		set_moveRelTool_ = nh_.advertiseService("setMoveRelTool", &KukaHardwareInterface::setMoveRelTool, this);
 
 		modbus_emergency_sub_ = nh_.subscribe<std_msgs::Bool>("/modbus_emergency", 1, &KukaHardwareInterface::modbusEmergencyCallback, this);
+		safe_stop_sub_ = nh_.subscribe<std_msgs::Bool>("/safe_stop", 1, &KukaHardwareInterface::safeStopCallback, this);
 
 		initial_angle_A_error_ = 0;
 	}
@@ -193,11 +194,24 @@ namespace kuka_rsi_cartesian_hw_interface
 		modbus_emergency_.store(msg->data);
 		if (msg->data)
 		{
-			ROS_WARN_STREAM_THROTTLE(2.0, "Modbus emergency active — cancelling active movement requests");
+			//ROS_WARN_STREAM_THROTTLE(2.0, "Modbus emergency active — cancelling active movement requests");
 		}
 		else
 		{
-			ROS_INFO_STREAM("Modbus emergency cleared — robot stays stopped until a new movement command is received");
+			//ROS_INFO_STREAM("Modbus emergency cleared — robot stays stopped until a new movement command is received");
+		}
+	}
+
+	void KukaHardwareInterface::safeStopCallback(const std_msgs::Bool::ConstPtr& msg)
+	{
+		safe_stop_.store(msg->data);
+		if (msg->data)
+		{
+			//ROS_WARN_STREAM_THROTTLE(2.0, "Modbus emergency active — cancelling active movement requests");
+		}
+		else
+		{
+			//ROS_INFO_STREAM("Modbus emergency cleared — robot stays stopped until a new movement command is received");
 		}
 	}
 
@@ -299,7 +313,7 @@ namespace kuka_rsi_cartesian_hw_interface
 		// Software emergency stop: cancel any active movement and send zero RSI command.
 		// The emergency flag is latched — robot stays stopped until a new service call arrives.
 		if (modbus_emergency_.load())
-		{
+		{	
 			cartesian_correction_request_ = false;
 			joint_correction_request_    = false;
 			cartesian_pad_cmds_          = CartesianPadCommand();
@@ -311,6 +325,48 @@ namespace kuka_rsi_cartesian_hw_interface
 			return true;
 		}
 
+		if (safe_stop_.load())
+		{
+		    ROS_WARN_THROTTLE(1.0, "Safe stop activated — ramping commands to zero");
+			cartesian_correction_request_ = false;
+			joint_correction_request_    = false;
+			cartesian_pad_cmds_          = CartesianPadCommand();
+			robot_is_moving_msg_.data    = false;
+			robot_is_moving_pub_.publish(robot_is_moving_msg_);
+
+		    const float decay = 0.85;
+		
+		    last_rsi_command_.x *= decay;
+		    last_rsi_command_.y *= decay;
+		    last_rsi_command_.z *= decay;
+		
+		    last_rsi_command_.a *= decay;
+		    last_rsi_command_.b *= decay;
+		    last_rsi_command_.c *= decay;
+		
+		    last_rsi_command_.a1 *= 0.95;
+		    last_rsi_command_.a6 *= decay;
+		
+		    RSIMessageStruct cmd = last_rsi_command_;
+		
+		    if (fabs(cmd.x) < 0.001) cmd.x = 0;
+		    if (fabs(cmd.y) < 0.001) cmd.y = 0;
+		    if (fabs(cmd.z) < 0.001) cmd.z = 0;
+		
+		    if (fabs(cmd.a) < 0.001) cmd.a = 0;
+		    if (fabs(cmd.a1) < 0.001) cmd.a1 = 0;
+		    if (fabs(cmd.a6) < 0.001) cmd.a6 = 0;
+		
+		    out_buffer_ = RSICommand(cmd.toVector(), ipoc_).xml_doc;
+		
+		    server_->send(out_buffer_);
+		
+		    robot_is_moving_msg_.data = false;
+		    robot_is_moving_pub_.publish(robot_is_moving_msg_);
+		
+		    return true;
+		}
+		
 		RSIMessageStruct RSI_message;
 
 		// Write part of the cartesian movement services, angle B and C is commented
@@ -645,8 +701,8 @@ namespace kuka_rsi_cartesian_hw_interface
 
 		// out_buffer_ = RSICommand('R',RSI_message.toVector(), ipoc_).xml_doc;
 		out_buffer_ = RSICommand(RSI_message.toVector(), ipoc_).xml_doc;		
-
-		// ROS_INFO("Send to robot:%s", out_buffer_.c_str());
+		last_rsi_command_ = RSI_message;
+		ROS_INFO("Send to robot:%s", out_buffer_.c_str());
 		server_->send(out_buffer_);
 
 		robot_is_moving_pub_.publish(robot_is_moving_msg_);

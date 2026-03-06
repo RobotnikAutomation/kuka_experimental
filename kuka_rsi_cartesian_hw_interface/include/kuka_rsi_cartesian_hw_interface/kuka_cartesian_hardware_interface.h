@@ -231,6 +231,8 @@ private:
   std::string in_buffer_;
   std::string out_buffer_;
   
+  RSIMessageStruct last_rsi_command_;
+
   //Cartesian movement from topic
   ros::Subscriber pad_sub_;
   ros::Subscriber phidget_sub_;
@@ -317,6 +319,9 @@ private:
   ros::Subscriber modbus_emergency_sub_;
   void modbusEmergencyCallback(const std_msgs::Bool::ConstPtr& msg);
 
+  std::atomic<bool> safe_stop_{false};
+  ros::Subscriber safe_stop_sub_;
+  void safeStopCallback(const std_msgs::Bool::ConstPtr& msg);
 
   //publisher
   boost::shared_ptr<realtime_tools::RealtimePublisher<sensor_msgs::JointState> > realtime_pub_;
