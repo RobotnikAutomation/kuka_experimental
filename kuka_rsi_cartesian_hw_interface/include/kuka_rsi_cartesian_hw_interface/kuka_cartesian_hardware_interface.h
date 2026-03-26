@@ -106,7 +106,7 @@ static const float BREAKING_ANGLE = 5.0;                    // grados en los que
 
 static const float MIN_JOINT_STEP = 0.015;
 
-static const int MAX_CONT_NOT_MOVING = 100;               //iteraciones máximas para parar el control si el robot no se está moviendo
+static const int MAX_CONT_NOT_MOVING = 300;               //iteraciones máximas para parar el control si el robot no se está moviendo
 
 static const int MIN_X_LIMIT = -650;                      //lowest X mm value for the tcp
 static const int MAX_Z_LIMIT = 2500;                      //highest Z mm value for the tcp (caution with the ceiling)
@@ -231,6 +231,8 @@ private:
   std::string in_buffer_;
   std::string out_buffer_;
   
+  RSIMessageStruct last_rsi_command_;
+
   //Cartesian movement from topic
   ros::Subscriber pad_sub_;
   ros::Subscriber phidget_sub_;
@@ -310,8 +312,17 @@ private:
   float step_max_A1;
   std::mutex state_mutex_;
 
+  // Software emergency stop (modbus_emergency topic).
+  // When true, write() zeroes RSI output and cancels active movement requests.
+  // Latched: robot stays stopped until a new movement service call is received.
+  std::atomic<bool> modbus_emergency_{false};
+  ros::Subscriber modbus_emergency_sub_;
+  void modbusEmergencyCallback(const std_msgs::Bool::ConstPtr& msg);
 
- 
+  std::atomic<bool> safe_stop_{false};
+  ros::Subscriber safe_stop_sub_;
+  void safeStopCallback(const std_msgs::Bool::ConstPtr& msg);
+
   //publisher
   boost::shared_ptr<realtime_tools::RealtimePublisher<sensor_msgs::JointState> > realtime_pub_;
 
@@ -333,6 +344,9 @@ public:
   bool moveJointsA1andA6(kuka_rsi_cartesian_hw_interface::set_A1_A6::Request &request, kuka_rsi_cartesian_hw_interface::set_A1_A6::Response &response);
   bool setMoveRelTool(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response);
   
+  // Publica robot_is_moving=false inmediatamente (usar antes de reconexión UDP)
+  void publishStopped();
+
   bool settingRelativeCartGoalPose(
 		robotnik_msgs::set_CartesianEuler_pose::Request &req,
 		robotnik_msgs::set_CartesianEuler_pose::Response &res,
