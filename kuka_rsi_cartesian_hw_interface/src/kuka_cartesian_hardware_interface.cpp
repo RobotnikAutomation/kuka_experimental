@@ -91,8 +91,8 @@ namespace kuka_rsi_cartesian_hw_interface
 		set_moveRelTool_ = nh_.advertiseService("setMoveRelTool", &KukaHardwareInterface::setMoveRelTool, this);
 
 		modbus_emergency_sub_ = nh_.subscribe<std_msgs::Bool>("/modbus_emergency", 1, &KukaHardwareInterface::modbusEmergencyCallback, this);
-		safe_stop_sub_ = nh_.subscribe<std_msgs::Bool>("/safe_stop", 1, &KukaHardwareInterface::safeStopCallback, this);
-
+		safe_stop_service_ = nh_.advertiseService("safe_stop_trigger", &KukaHardwareInterface::safeStopServiceCallback, this);
+		ROS_INFO("Safe stop trigger service ready");
 		initial_angle_A_error_ = 0;
 	}
 
@@ -202,17 +202,13 @@ namespace kuka_rsi_cartesian_hw_interface
 		}
 	}
 
-	void KukaHardwareInterface::safeStopCallback(const std_msgs::Bool::ConstPtr& msg)
+	bool KukaHardwareInterface::safeStopServiceCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
 	{
-		safe_stop_.store(msg->data);
-		if (msg->data)
-		{
-			//ROS_WARN_STREAM_THROTTLE(2.0, "Modbus emergency active — cancelling active movement requests");
-		}
-		else
-		{
-			//ROS_INFO_STREAM("Modbus emergency cleared — robot stays stopped until a new movement command is received");
-		}
+	    safe_stop_.store(true);  // activa el safe stop
+	    res.success = true;
+	    res.message = "Safe stop triggered — robot will ramp to zero.";
+	    ROS_WARN("Safe stop triggered via service");
+	    return true;
 	}
 
 	// callback from topic kuka_pad/cartesian_move
@@ -318,6 +314,7 @@ namespace kuka_rsi_cartesian_hw_interface
 			joint_correction_request_    = false;
 			cartesian_pad_cmds_          = CartesianPadCommand();
 			robot_is_moving_msg_.data    = false;
+			distance_remaining_=0;
 			robot_is_moving_pub_.publish(robot_is_moving_msg_);
 			RSIMessageStruct zero_msg;
 			out_buffer_ = RSICommand(zero_msg.toVector(), ipoc_).xml_doc;
@@ -328,55 +325,63 @@ namespace kuka_rsi_cartesian_hw_interface
 		if (safe_stop_.load())
 		{
 		    ROS_WARN_THROTTLE(1.0, "Safe stop activated — ramping commands to zero");
-			cartesian_correction_request_ = false;
-			joint_correction_request_    = false;
-			cartesian_pad_cmds_          = CartesianPadCommand();
-			robot_is_moving_msg_.data    = false;
-			robot_is_moving_pub_.publish(robot_is_moving_msg_);
-
-		    const float decay = 0.85;
 		
-		    last_rsi_command_.x *= decay;
-		    last_rsi_command_.y *= decay;
-		    last_rsi_command_.z *= decay;
+		    // Cancelar cualquier movimiento activo
+		    cartesian_correction_request_ = false;
+		    joint_correction_request_     = false;
+		    cartesian_pad_cmds_           = CartesianPadCommand();
 		
-		    last_rsi_command_.a *= decay;
-		    last_rsi_command_.b *= decay;
-		    last_rsi_command_.c *= decay;
-		
-		    last_rsi_command_.a1 *= 0.95;
-		    last_rsi_command_.a6 *= decay;
-		
-		    RSIMessageStruct cmd = last_rsi_command_;
-		
-		    if (fabs(cmd.x) < 0.001) cmd.x = 0;
-		    if (fabs(cmd.y) < 0.001) cmd.y = 0;
-		    if (fabs(cmd.z) < 0.001) cmd.z = 0;
-		
-		    if (fabs(cmd.a) < 0.001) cmd.a = 0;
-		    if (fabs(cmd.a1) < 0.001) cmd.a1 = 0;
-		    if (fabs(cmd.a6) < 0.001) cmd.a6 = 0;
-		
-		    out_buffer_ = RSICommand(cmd.toVector(), ipoc_).xml_doc;
-		
-		    server_->send(out_buffer_);
-		
+		    // Indicar que el robot no se está moviendo
 		    robot_is_moving_msg_.data = false;
 		    robot_is_moving_pub_.publish(robot_is_moving_msg_);
-
-			if (fabs(last_rsi_command_.x) < 0.001 &&
-			    fabs(last_rsi_command_.y) < 0.001 &&
-			    fabs(last_rsi_command_.z) < 0.001 &&
-			    fabs(last_rsi_command_.a) < 0.001 &&
-			    fabs(last_rsi_command_.a1) < 0.001 &&
-			    fabs(last_rsi_command_.a6) < 0.001)
-			{
-			    // Ya se ha degradado a cero, safe stop puede resetearse
-			    safe_stop_ = false;
-			    ROS_INFO("Safe stop reset — robot ready to move again.");
-			}
-
-		    return true;
+		
+		    // Factor de decaimiento
+		    const float decay_linear = 0.85f;  // para X,Y,Z,A,B,C
+		    const float decay_joint  = 0.95f;  // para A1
+		    const float threshold    = 0.001f; // umbral para considerar cero
+		
+		    // Degradar suavemente las posiciones y ángulos
+		    last_rsi_command_.x  *= decay_linear;
+		    last_rsi_command_.y  *= decay_linear;
+		    last_rsi_command_.z  *= decay_linear;
+		    last_rsi_command_.a  *= decay_linear;
+		    last_rsi_command_.b  *= decay_linear;
+		    last_rsi_command_.c  *= decay_linear;
+		    last_rsi_command_.a1 *= decay_joint;
+		    last_rsi_command_.a6 *= decay_joint;
+		
+		    // Crear comando RSI para enviar
+		    RSIMessageStruct cmd = last_rsi_command_;
+		
+		    // Forzar a cero si está muy cerca de cero
+		    if (fabs(cmd.x)  < threshold) cmd.x  = 0.0;
+		    if (fabs(cmd.y)  < threshold) cmd.y  = 0.0;
+		    if (fabs(cmd.z)  < threshold) cmd.z  = 0.0;
+		    if (fabs(cmd.a)  < threshold) cmd.a  = 0.0;
+		    if (fabs(cmd.b)  < threshold) cmd.b  = 0.0;
+		    if (fabs(cmd.c)  < threshold) cmd.c  = 0.0;
+		    if (fabs(cmd.a1) < threshold) cmd.a1 = 0.0;
+		    if (fabs(cmd.a6) < threshold) cmd.a6 = 0.0;
+		
+		    // Enviar comando RSI
+		    out_buffer_ = RSICommand(cmd.toVector(), ipoc_).xml_doc;
+		    server_->send(out_buffer_);
+		
+		    // Re-publicar estado de movimiento
+		    robot_is_moving_msg_.data = false;
+		    robot_is_moving_pub_.publish(robot_is_moving_msg_);
+		
+		    // Revisar si todos los comandos han llegado a cero para resetear safe stop
+		    if (cmd.x == 0.0 && cmd.y == 0.0 && cmd.z == 0.0 &&
+		        cmd.a == 0.0 && cmd.b == 0.0 && cmd.c == 0.0 &&
+		        cmd.a1 == 0.0 && cmd.a6 == 0.0)
+		    {
+				distance_remaining_=0;
+		        safe_stop_ = false;  // safe stop completado
+		        ROS_INFO("Safe stop complete — robot ready to move again.");
+		    }
+		
+		    return true; // salir de write() sin procesar comandos normales
 		}
 		
 		RSIMessageStruct RSI_message;

@@ -51,6 +51,7 @@
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float64.h>
 #include <std_srvs/SetBool.h>
+#include <std_srvs/Trigger.h>
 
 // ros_control
 #include <realtime_tools/realtime_publisher.h>
@@ -318,10 +319,10 @@ private:
   std::atomic<bool> modbus_emergency_{false};
   ros::Subscriber modbus_emergency_sub_;
   void modbusEmergencyCallback(const std_msgs::Bool::ConstPtr& msg);
-
+  
+  // Servicio de Safe Stop
+  ros::ServiceServer safe_stop_service_;
   std::atomic<bool> safe_stop_{false};
-  ros::Subscriber safe_stop_sub_;
-  void safeStopCallback(const std_msgs::Bool::ConstPtr& msg);
 
   //publisher
   boost::shared_ptr<realtime_tools::RealtimePublisher<sensor_msgs::JointState> > realtime_pub_;
@@ -343,6 +344,7 @@ public:
   bool setRelativeCartGoalPoseFast(robotnik_msgs::set_CartesianEuler_pose::Request &request, robotnik_msgs::set_CartesianEuler_pose::Response &response);
   bool moveJointsA1andA6(kuka_rsi_cartesian_hw_interface::set_A1_A6::Request &request, kuka_rsi_cartesian_hw_interface::set_A1_A6::Response &response);
   bool setMoveRelTool(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response);
+  bool safeStopServiceCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res);
   
   // Publica robot_is_moving=false inmediatamente (usar antes de reconexión UDP)
   void publishStopped();
