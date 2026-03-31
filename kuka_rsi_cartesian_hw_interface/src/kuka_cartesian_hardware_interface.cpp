@@ -158,7 +158,7 @@ namespace kuka_rsi_cartesian_hw_interface
 		}
 		// out_buffer_ = RSICommand('R',rsi_initial_command_, ipoc_).xml_doc;
 		out_buffer_ = RSICommand(rsi_initial_command_, ipoc_).xml_doc;
-		ROS_INFO("SENT to robot:%s", out_buffer_.c_str());
+		//ROS_INFO("SENT to robot:%s", out_buffer_.c_str());
 
 		server_->send(out_buffer_);
 		// Set receive timeout to 1 second
@@ -707,7 +707,7 @@ namespace kuka_rsi_cartesian_hw_interface
 		// out_buffer_ = RSICommand('R',RSI_message.toVector(), ipoc_).xml_doc;
 		out_buffer_ = RSICommand(RSI_message.toVector(), ipoc_).xml_doc;		
 		last_rsi_command_ = RSI_message;
-		ROS_INFO("Send to robot:%s", out_buffer_.c_str());
+		//ROS_INFO("Send to robot:%s", out_buffer_.c_str());
 		server_->send(out_buffer_);
 
 		// Publish moving state based on whether any non-zero command is being sent to the robot.
