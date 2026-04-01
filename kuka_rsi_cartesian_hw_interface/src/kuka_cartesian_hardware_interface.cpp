@@ -315,7 +315,7 @@ namespace kuka_rsi_cartesian_hw_interface
 			RSI_message.y = cartesian_step_[1] * slope;
 			RSI_message.z = cartesian_step_[2] * slope;
 
-			ROS_INFO("Steps: %f %f", RSI_message.x, RSI_message.y);
+			//ROS_INFO("Steps: %f %f", RSI_message.x, RSI_message.y);
 			
 			// --- Comprobación y ajuste del ángulo del eje A (rotación) ---
 			
@@ -394,7 +394,7 @@ namespace kuka_rsi_cartesian_hw_interface
 				cartesian_correction_request_ = false;
 				robot_is_moving_msg_.data = false;
 				A6_in_valid_range = true;
-				ROS_INFO("LAST ITERATION");
+				//ROS_INFO("LAST ITERATION");
 			}
 
 			// Si el robot no ha variado significativamente su posición y orientación 
@@ -405,13 +405,13 @@ namespace kuka_rsi_cartesian_hw_interface
 				fabs(prev_angle_C_error - angle_C_error) < 0.001)
 			{
 				counter_not_moving_++;
-				ROS_INFO("NOT MOVING, moved: %f angle: %f", 
-					fabs(prev_distance_remaining_ - distance_remaining_), 
-					fabs(prev_angle_A_error - angle_A_error));
+				//ROS_INFO("NOT MOVING, moved: %f angle: %f", 
+				//	fabs(prev_distance_remaining_ - distance_remaining_), 
+				//	fabs(prev_angle_A_error - angle_A_error));
 			}
 			else
 			{
-				ROS_INFO(" MOVING, moved: %f", fabs(prev_distance_remaining_ - distance_remaining_));
+				//ROS_INFO(" MOVING, moved: %f", fabs(prev_distance_remaining_ - distance_remaining_));
 				prev_distance_remaining_ = distance_remaining_;
 				prev_angle_A_error = angle_A_error;
 				prev_angle_B_error = angle_B_error;
@@ -500,7 +500,7 @@ namespace kuka_rsi_cartesian_hw_interface
 				joint_correction_request_ = false;
 				robot_is_moving_msg_.data = false;
 				A6_in_valid_range = true;
-				ROS_INFO("LAST ITERATION");
+				//ROS_INFO("LAST ITERATION");
 			}
 			// Check if it is moving
 			// Se verifica si no ha habido cambio desde la última iteración
@@ -508,11 +508,11 @@ namespace kuka_rsi_cartesian_hw_interface
 				fabs(prev_A6_error - A6_current_error_) < MIN_STEP_A6)
 			{
 				counter_not_moving_++;
-				ROS_INFO("NOT MOVING A1 %f A6 %f", fabs(prev_A1_error - A1_current_error_), fabs(prev_A6_error - A6_current_error_));
+				//ROS_INFO("NOT MOVING A1 %f A6 %f", fabs(prev_A1_error - A1_current_error_), fabs(prev_A6_error - A6_current_error_));
 			}
 			else
 			{
-				ROS_INFO(" MOVING");
+				//ROS_INFO(" MOVING");
 				prev_A1_error = A1_current_error_;
 				prev_A6_error = A6_current_error_;
 				counter_not_moving_ = 0;
@@ -529,14 +529,14 @@ namespace kuka_rsi_cartesian_hw_interface
 			if (z_force_limit_reached_ && RSI_message.z < 0)
 			{
 				RSI_message.z = 0.0;
-				ROS_INFO("Blocking -Z");
+				//ROS_INFO("Blocking -Z");
 			}
 			//	limits of angle of the tool
 			if ((rsi_state_.positions[5] >= UP_LIMIT_A6 && cartesian_pad_cmds_.yaw > 0) || 
 			(rsi_state_.positions[5] <= LOW_LIMIT_A6 && cartesian_pad_cmds_.yaw < 0))
 			{
 				// ROS_INFO(" PAD: %f Posicion A:%f Axis6: %f",cartesian_pad_cmds_.yaw,rsi_state_.cart_position[3],rsi_state_.positions[5]);
-				ROS_INFO("Limits of Angle A reached. PAD: %f Posicion A:%f Axis6: %f", cartesian_pad_cmds_.yaw, rsi_state_.cart_position[3], rsi_state_.positions[5]);
+				//ROS_INFO("Limits of Angle A reached. PAD: %f Posicion A:%f Axis6: %f", cartesian_pad_cmds_.yaw, rsi_state_.cart_position[3], rsi_state_.positions[5]);
 			}
 			else
 			{	// yaw
@@ -556,12 +556,12 @@ namespace kuka_rsi_cartesian_hw_interface
 		{
 			RSI_message.x = 0;
 			RSI_message.y = 0;
-			ROS_INFO("-x out of range");
+			//ROS_INFO("-x out of range");
 		}
 		if (rsi_state_.cart_position[2] >= MAX_Z_LIMIT && RSI_message.z > 0)
 		{
 			RSI_message.z = 0;
-			ROS_INFO("+z out of range");
+			//ROS_INFO("+z out of range");
 		}
 
 		// out_buffer_ = RSICommand('R',RSI_message.toVector(), ipoc_).xml_doc;
